@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using ChinaTower.Verification.Models.Infrastructures;
 using Newtonsoft.Json;
@@ -10,7 +10,11 @@ namespace ChinaTower.Verification.Models
 {
     public class Form
     {
+        #region Real fields
         public long Id { get; set; }
+
+        [MaxLength(64)]
+        public string UniqueKey { get; set; }
 
         public DateTime VerificationTime { get; set; }
 
@@ -20,13 +24,14 @@ namespace ChinaTower.Verification.Models
 
         public string VerificationJson { get; set; }
 
+        public string FormJson { get; set; }
+        #endregion
+        #region Nested objects parsing
         [NotMapped]
         public ICollection<VerificationLog> VerificationLogs
         {
             get { return JsonConvert.DeserializeObject<ICollection<VerificationLog>>(VerificationJson); }
         }
-        
-        public string FormJson { get; set; }
         
         [NotMapped]
         public string[] FormStringArray
@@ -50,5 +55,6 @@ namespace ChinaTower.Verification.Models
                 return ret;
             }
         }
+        #endregion
     }
 }

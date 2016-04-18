@@ -16,6 +16,12 @@ namespace ChinaTower.Verification.Models
         {
             base.OnModelCreating(builder);
 
+            builder.Entity<Form>(e =>
+            {
+                e.HasIndex(x => x.VerificationTime);
+                e.HasIndex(x => x.Type);
+                e.HasIndex(x => x.Status);
+            });
         }
     }
 }

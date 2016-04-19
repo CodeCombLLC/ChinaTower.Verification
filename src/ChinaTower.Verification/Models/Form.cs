@@ -29,6 +29,9 @@ namespace ChinaTower.Verification.Models
         public double? Lat { get; set; }
 
         public string FormJson { get; set; }
+
+        [MaxLength(16)]
+        public string City { get; set; }
         #endregion
         #region Nested objects parsing
         [NotMapped]
@@ -53,7 +56,7 @@ namespace ChinaTower.Verification.Models
             {
                 var ret = new Dictionary<string, string>();
                 var stringArray = FormStringArray;
-                var headers = Headers.Dictionary[Type];
+                var headers = Hash.Headers[Type];
                 for (var i = 0; i < headers.Count(); i++)
                     ret.Add(headers[i], stringArray[i]);
                 return ret;

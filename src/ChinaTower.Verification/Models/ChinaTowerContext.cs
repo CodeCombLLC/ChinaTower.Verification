@@ -10,6 +10,8 @@ namespace ChinaTower.Verification.Models
 
         public DbSet<Form> Forms { get; set; }
 
+        public DbSet<City> Cities { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -22,6 +24,7 @@ namespace ChinaTower.Verification.Models
                 e.HasIndex(x => x.Lon);
                 e.HasIndex(x => x.Lat);
                 e.HasIndex(x => x.UniqueKey);
+                e.HasIndex(x => x.City);
             });
         }
     }

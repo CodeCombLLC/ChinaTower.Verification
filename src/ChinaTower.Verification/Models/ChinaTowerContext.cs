@@ -19,6 +19,9 @@ namespace ChinaTower.Verification.Models
                 e.HasIndex(x => x.VerificationTime);
                 e.HasIndex(x => x.Type);
                 e.HasIndex(x => x.Status);
+                e.HasIndex(x => x.Lon);
+                e.HasIndex(x => x.Lat);
+                e.HasIndex(x => x.UniqueKey);
             });
         }
     }

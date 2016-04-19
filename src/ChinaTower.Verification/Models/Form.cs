@@ -24,6 +24,10 @@ namespace ChinaTower.Verification.Models
 
         public string VerificationJson { get; set; }
 
+        public double? Lon { get; set; }
+
+        public double? Lat { get; set; }
+
         public string FormJson { get; set; }
         #endregion
         #region Nested objects parsing

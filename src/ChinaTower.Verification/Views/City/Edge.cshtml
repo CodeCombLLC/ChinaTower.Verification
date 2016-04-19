@@ -1,16 +1,73 @@
 ﻿@model City
 @{ 
-    ViewBag.Title = "编辑城市边界";
+    ViewBag.Title = "编辑城市边界 - " + Model.Id;
 }
 
 <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=g6DcirKK7FlGGGoiLwslU9kL"></script>
 <script type="text/javascript" src="http://api.map.baidu.com/library/DistanceTool/1.2/src/DistanceTool_min.js"></script>
 <div id="allmap">
 </div>
+<div id="re-edge">
+    <i class="fa fa-map-marker"></i>
+</div>
+<div id="re-edge-cancel">
+    <i class="fa fa-undo"></i>
+</div>
 <script>
-    var map = new BMap.Map("allmap");
+    // Buttons
+    var editing = false;
+    var startPending = true;
+    var points = [];
+    var drawing = [];
+    $('#re-edge').click(function(){
+        $('#re-edge').hide();
+        $('#re-edge-cancel').show();
+        startPending = true;
+        editing = true;
+        points = [];
+    });
+    $('#re-edge-cancel').click(function(){
+        $('#re-edge').show();
+        $('#re-edge-cancel').hide();
+        editing = false;
+        startPending = true;
+        points = [];
+        for(var i = 0; i < drawing.length; i++)
+            map.removeOverlay(drawing[i]);
+        drawing = [];
+    });
+
+    // BMap
+    var map = new BMap.Map("allmap",{enableMapClick:false});
+    var icon = new BMap.Icon("/images/start_pos.png", new BMap.Size(20, 20));
+
+    var leftClick = function(e){
+        if (editing) {
+            var point = {lng:e.point.lng,lat:e.point.lat};
+            points.push({ X: e.point.lng, Y: e.point.lat, Type: 'Baidu' });
+            if (startPending) {
+                startPending = false;
+                var marker = new BMap.Marker(point, { icon: icon });
+                marker.addEventListener('click', function() {
+                    if (points.length >= 3) 
+                        console.log('1234567');
+                }, false);
+                drawing.push(marker);
+                map.addOverlay(marker);
+            } else {
+                if (points.length > 1) {
+                    var polylinePoints = [new BMap.Point(points[points.length - 2].X, points[points.length - 2].Y), new BMap.Point(points[points.length - 1].X, points[points.length - 1].Y)];
+                    var polyline = new BMap.Polyline(polylinePoints, {strokeColor:'green', strokeWeight:5, strokeOpacity:1});
+                    drawing.push(polyline);
+                    map.addOverlay(polyline);
+                }
+            }
+        }
+    };
+
+    map.addEventListener("click", leftClick);
+
     var myDis = new BMapLib.DistanceTool(map);
-    var icon = new BMap.Icon("/images/start_pos.png", new BMap.Size(32, 32));
     $.getJSON('@(new HtmlString(Url.Action("Gps", "City", new { city = Model.Id, address = Model.Id })))', {}, function (data) { 
         map.centerAndZoom(new BMap.Point(data.Lon, data.Lat), 17);
         map.enableScrollWheelZoom(true);
@@ -26,7 +83,7 @@
 
     function resizeMap()
     {
-        $('#allmap').height($(window).height() - $('#allmap').offset().top);
+        $('#allmap').outerHeight($(window).height() - $('.header').outerHeight() - $('.wrapper h3').outerHeight() - $('.site-footer').outerHeight() - 20);
         $('#allmap').outerWidth($('.wrapper').outerWidth());
     }
 

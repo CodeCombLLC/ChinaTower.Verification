@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using CodeComb.Algorithm.Geography;
@@ -82,6 +83,17 @@ namespace ChinaTower.Verification.Controllers
                 x.RedirectText = "返回城市列表";
                 x.RedirectUrl = Url.Action("Index", "City");
             });
+        }
+        
+        [HttpGet]
+        public async Task<IActionResult> Gps(string city, string address)
+        {
+            var client = new HttpClient();
+            var result = await client.GetAsync($"http://api.map.baidu.com/geocoder/v2/?city={city}&address={address}&output=json&ak=lrMh687iqexo2F4V9bMYLmbX");
+            var jsonStr = await result.Content.ReadAsStringAsync();
+            var obj = JsonConvert.DeserializeObject<dynamic>(jsonStr);
+            var ret = new { Lon = obj.result.location.lng, Lat = obj.result.location.lat };
+            return Json(ret);
         }
     }
 }

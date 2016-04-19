@@ -2292,3 +2292,7 @@ hr {
 .centered .pagination {
     margin: 0;
 }
+
+#allmap {
+    margin: 0 -15px -15px -15px;
+}

@@ -3,6 +3,7 @@ using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.Data.Entity;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using ChinaTower.Verification.Models;
 
 namespace ChinaTower.Verification
@@ -15,7 +16,15 @@ namespace ChinaTower.Verification
                 .AddDbContext<ChinaTowerContext>(x => x.UseNpgsql("User ID=postgres;Password=123456;Host=localhost;Port=5432;Database=ctv;"))
                 .AddNpgsql();
 
-            services.AddIdentity<User, IdentityRole>()
+            services.AddIdentity<User, IdentityRole>(x =>
+            {
+                x.Password.RequireDigit = false;
+                x.Password.RequiredLength = 0;
+                x.Password.RequireLowercase = false;
+                x.Password.RequireNonLetterOrDigit = false;
+                x.Password.RequireUppercase = false;
+                x.User.AllowedUserNameCharacters = null;
+            })
                 .AddDefaultTokenProviders()
                 .AddEntityFrameworkStores<ChinaTowerContext>();
 
@@ -30,14 +39,19 @@ namespace ChinaTower.Verification
             services.AddSmartCookies();
         }
 
-        public void Configure(IApplicationBuilder app)
+        public async void Configure(IApplicationBuilder app, ILoggerFactory logger)
         {
+            logger.AddConsole();
+            logger.MinimumLevel = LogLevel.Warning;
+
             app.UseIISPlatformHandler();
             app.UseIdentity();
             app.UseAutoAjax();
             app.UseStaticFiles();
             app.UseSignalR();
             app.UseMvcWithDefaultRoute();
+
+            await SampleData.InitDB(app.ApplicationServices);
         }
 
         public static void Main(string[] args) => WebApplication.Run<Startup>(args);

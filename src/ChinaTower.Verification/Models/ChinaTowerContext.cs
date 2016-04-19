@@ -25,6 +25,8 @@ namespace ChinaTower.Verification.Models
                 e.HasIndex(x => x.Lat);
                 e.HasIndex(x => x.UniqueKey);
                 e.HasIndex(x => x.City);
+                e.HasIndex(x => x.District);
+                e.HasIndex(x => x.StationKey);
             });
         }
     }

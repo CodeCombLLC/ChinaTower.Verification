@@ -85,6 +85,32 @@ namespace ChinaTower.Verification.Models.Infrastructures
             { FormType.功分器, null }
         };
 
+        public static Dictionary<FormType, int?> StationId = new Dictionary<FormType, int?>
+        {
+            { FormType.衰减器, 3 },
+            { FormType.直流配电设备, 3 },
+            { FormType.合路器, 2 },
+            { FormType.负载, 7 },
+            { FormType.交流配电, 3 },
+            { FormType.高压配电, 3 },
+            { FormType.室内天线, 3 },
+            { FormType.低压配电, 3 },
+            { FormType.机房, 2 },
+            { FormType.机房空调设备, 1 },
+            { FormType.其他设备, 1 },
+            { FormType.室外天线, 3 },
+            { FormType.外市电引入, 1 },
+            { FormType.POI, 3 },
+            { FormType.动力及环境单元, 6 },
+            { FormType.铁塔, 3 },
+            { FormType.铁塔平面, 19 },
+            { FormType.整流器设备, 4 },
+            { FormType.站址, null },
+            { FormType.UPS, null },
+            { FormType.变压稳压, 4 },
+            { FormType.功分器, null }
+        };
+
         public static Dictionary<FormType, string[]> Headers = new Dictionary<FormType, string[]>
         {
             { FormType.衰减器, new string[] { "器材编号","器材名称","站址名称","站址编码","设备型号","设备序列号","所属室分","设备类型","别名","上联设备类型","器材名称1","上联馈线长度(M)","上联馈线型号","分配损耗","插入(耦合)损耗","隔离度(db)","输入驻波比","功率容量(W)","频率范围","带内平坦度","方向性","输入阻抗","耦合度","接头形式","工作温度","投产日期","保修期","软件版本","备注","创建人","修改人员","创建时间","修改时间" } },
@@ -110,6 +136,5 @@ namespace ChinaTower.Verification.Models.Infrastructures
             { FormType.变压稳压, new string[] { "设备名称","设备编号","生产厂商","站址名称","站址编码","机房名称","启用时间","维护状态","创建时间","修改时间","创建人","修改人员","数据来源","物理站址编码","设备子类型","设备类型","资产接收类型" } },
             { FormType.功分器, new string[] { "所属室分", "所属站点", "所属楼层", "器材编号", "器材名称", "设备类型", "功率容量", "频率范围" } }
         };
-
     }
 }

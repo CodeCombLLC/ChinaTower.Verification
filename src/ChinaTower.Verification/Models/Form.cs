@@ -16,6 +16,8 @@ namespace ChinaTower.Verification.Models
         [MaxLength(64)]
         public string UniqueKey { get; set; }
 
+        public long StationKey { get; set; }
+
         public DateTime VerificationTime { get; set; }
 
         public FormType Type { get; set; }
@@ -32,6 +34,9 @@ namespace ChinaTower.Verification.Models
 
         [MaxLength(16)]
         public string City { get; set; }
+
+        [MaxLength(16)]
+        public string District { get; set; }
         #endregion
         #region Nested objects parsing
         [NotMapped]

@@ -1,0 +1,56 @@
+﻿@model Prompt
+@{
+    ViewBag.Title = "提示信息";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Dashboard">
+    <meta name="keyword" content="Dashboard, Bootstrap, Admin, Template, Theme, Responsive, Fluid, Retina">
+
+    <title>@ViewBag.Title - 中国铁塔数据校验平台</title>
+    <link href="~/styles/bootstrap.css" rel="stylesheet">
+    <link href="~/styles/font-awesome.css" rel="stylesheet" />
+    <link href="~/styles/style.css" rel="stylesheet">
+    <link href="~/styles/style-responsive.css" rel="stylesheet">
+
+    <script src="~/scripts/jquery.js"></script>
+    <script src="~/scripts/bootstrap.min.js"></script>
+    <script type="text/javascript" src="~/scripts/jquery.backstretch.min.js"></script>
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+      <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+    <div id="login-page">
+        <div class="container">
+            <div class="col-md-6">
+                <h2 class="form-login-heading">@Model.Title</h2>
+                <div>@Model.Details</div>
+                <div>
+                    @if (!Model.HideBack)
+                    {
+                        <a class="btn btn-info" href="javascript:window.history.go(-1);">返回上一页</a>
+                    }
+                    <a class="btn btn-info" href="/">返回首页</a>
+                    @if (!string.IsNullOrEmpty(Model.RedirectText))
+                    {
+                        <a class="btn btn-info" href="@Model.RedirectUrl">@Model.RedirectText</a>
+                    }
+                </div>
+            </div>
+            <br />
+            <br />
+            <div style="text-align:center;color:#ccc">Copyright © 2016 Harbin <a style="color:#ccc" href="http://www.codecomb.com">Code Comb™</a> Technology Co., Ltd. All rights reserved. </div>
+        </div>
+    </div>
+    <script>
+        $.backstretch("/images/login-bg.jpg", {speed: 500});
+    </script>
+</body>
+</html>

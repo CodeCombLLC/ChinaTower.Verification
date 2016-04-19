@@ -9,8 +9,8 @@ namespace ChinaTower.Verification.Models
     {
         [MaxLength(16)]
         public string Id { get; set; }
-         
-        public string EdgeJson { get; set; }
+
+        public string EdgeJson { get; set; } = "[]";
 
         [NotMapped]
         public Polygon Edge

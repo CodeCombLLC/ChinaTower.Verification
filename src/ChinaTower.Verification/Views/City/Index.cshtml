@@ -1,0 +1,65 @@
+﻿@model IEnumerable<City>
+@{
+    ViewBag.Title = "城市管理";
+}
+
+<div class="col-md-9">
+    <div class="showback">
+        <div>
+            <form>
+                <div class="col-md-9">
+                    <input type="text" name="city" placeholder="城市" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <input type="submit" value="检索" class="btn btn-primary" />
+                </div>
+            </form>
+        </div>
+        <hr />
+        <div>
+            <table class="table table-bordered table-striped table-condensed">
+                <thead>
+                    <tr>
+                        <th>城市名</th>
+                        <th>边界</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var x in Model)
+            {
+                        <tr id="city-@x.Id">
+                            <td>@x.Id</td>
+                            <td>@(x.Edge.Count == 0 ? "未划分" : (x.Edge.Area.ToString("0.00") + " k㎡"))</td>
+                            <td>
+                                <a asp-action="Edge" asp-route-id="@x.Id" asp-controller="City">编辑边界</a>
+                                <a href="javascript: deleteDialog('javascript:deleteCity(\'@x.Id\')', 'city-@x.Id')">删除</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <nav class="centered">
+                @Html.MakePager("", "active", "pagination")
+            </nav>
+        </div>
+    </div>
+</div>
+<div class="col-md-3">
+    <div class="showback">
+        <h4><i class="fa fa-angle-right"></i> 添加城市</h4>
+        <form asp-action="Insert" asp-controller="City" method="post">
+            <div class="form-group">
+                <label>城市名称</label>
+                <input type="text" name="City" class="form-control" />
+            </div>
+            <input type="submit" value="添加" class="btn btn-primary" />
+        </form>
+    </div>
+</div>
+<form asp-action="Delete" asp-controller="City" method="post" id="frmDeleteCity"></form>
+<script>
+    function deleteCity(id) {
+        $.post($('#frmDeleteCity').attr('action'), $('#frmDeleteCity').serialize(), function () { });
+    }
+</script>

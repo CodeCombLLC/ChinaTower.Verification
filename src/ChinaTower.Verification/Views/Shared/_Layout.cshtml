@@ -26,6 +26,7 @@
     <script type="text/javascript" src="~/scripts/gritter/js/jquery.gritter.js"></script>
     <script type="text/javascript" src="~/scripts/gritter-conf.js"></script>
     <script src="~/scripts/chart-master/Chart.js"></script>
+    <script src="~/scripts/site.js"></script>
     <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
       <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
@@ -189,20 +190,17 @@
             </div>
         </header>
         <!--header end-->
-        <!-- **********************************************************************************************************************************************************
-        MAIN SIDEBAR MENU
-        *********************************************************************************************************************************************************** -->
+
         <!--sidebar start-->
         <aside>
             <div id="sidebar" class="nav-collapse ">
                 <!-- sidebar menu start-->
                 <ul class="sidebar-menu" id="nav-accordion">
-
                     <p class="centered"><a href="profile.html"><img src="assets/img/ui-sam.jpg" class="img-circle" width="60"></a></p>
-                    <h5 class="centered">@*@User.Current.UserName*@</h5>
+                    <h5 class="centered">@User.Current.UserName</h5>
 
                     <li class="sub-menu">
-                        <a class="active" href="index.html">
+                        <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Home" ? "active" : "")" asp-action="Index" asp-controller="Home">
                             <i class="fa fa-dashboard"></i>
                             <span>仪表盘</span>
                         </a>
@@ -211,7 +209,7 @@
                     @if (User.AnyRoles("Root"))
                     {
                         <li class="sub-menu">
-                            <a asp-controller="City" asp-action="Index">
+                            <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "City" ? "active" : "")" asp-controller="City" asp-action="Index">
                                 <i class="fa fa-building"></i>
                                 <span>城市管理</span>
                             </a>
@@ -219,14 +217,14 @@
                     }
 
                     <li class="sub-menu">
-                        <a asp-controller="Data" asp-action="Import">
+                        <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Home" ? "active" : "")" asp-controller="Data" asp-action="Import">
                             <i class="fa fa-download"></i>
                             <span>数据导入</span>
                         </a>
                     </li>
 
                     <li class="sub-menu">
-                        <a href="javascript:;">
+                        <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Data" ? "active" : "")" href="javascript:;">
                             <i class="fa fa-check-square"></i>
                             <span>数据校验</span>
                         </a>
@@ -237,14 +235,14 @@
                     </li>
 
                     <li class="sub-menu">
-                        <a asp-controller="Station" asp-action="Index">
+                        <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Station" ? "active" : "")" asp-controller="Station" asp-action="Index">
                             <i class="fa fa-map-marker"></i>
                             <span>站址信息</span>
                         </a>
                     </li>
 
                     <li class="sub-menu">
-                        <a asp-controller="Account" asp-action="Index">
+                        <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Account" ? "active" : "")" asp-controller="Account" asp-action="Index">
                             <i class="fa fa-users"></i>
                             <span>用户管理</span>
                         </a>
@@ -271,9 +269,8 @@
         <!--main content start-->
         <section id="main-content">
             <section class="wrapper">
-                <div class="row">
+                <h3><i class="fa fa-angle-right"></i> @ViewBag.Title</h3>
                     @RenderBody()
-                </div>
             </section>
         </section>
 

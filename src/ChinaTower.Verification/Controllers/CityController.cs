@@ -65,16 +65,8 @@ namespace ChinaTower.Verification.Controllers
         [ValidateAntiForgeryToken]
         public IActionResult Edge(string id, string edge)
         {
-            var tmp1 = edge.Split('|');
-            var polygon = new Polygon();
-            foreach (var str in tmp1)
-            {
-                var tmp2 = str.Split(',');
-                var p = new Point { X = Convert.ToDouble(tmp2[0]), Y = Convert.ToDouble(tmp2[1]), Type = PointType.Baidu };
-                polygon.Add(p.ToWgsPoint());
-            }
             var city = DB.Cities.Single(x => x.Id == id);
-            city.EdgeJson = JsonConvert.SerializeObject(polygon);
+            city.EdgeJson = edge;
             DB.SaveChanges();
             return Prompt(x =>
             {

@@ -33,7 +33,7 @@
                             <td>@(x.Edge.Count == 0 ? "未划分" : (x.Edge.Area.ToString("0.00") + " k㎡"))</td>
                             <td>
                                 <a asp-action="Edge" asp-route-id="@x.Id" asp-controller="City">编辑边界</a>
-                                <a href="javascript: deleteDialog('javascript:deleteCity(\'@x.Id\')', 'city-@x.Id')">删除</a>
+                                <a href="javascript: deleteDialog('@x.Id' ,'city-@x.Id')">删除</a>
                             </td>
                         </tr>
                     }
@@ -57,9 +57,12 @@
         </form>
     </div>
 </div>
-<form asp-action="Delete" asp-controller="City" method="post" id="frmDeleteCity"></form>
+<form asp-action="Delete" asp-controller="City" method="post" id="frmDelete">
+    <input type="hidden" name="city" id="cityId" />
+</form>
 <script>
-    function deleteCity(id) {
-        $.post($('#frmDeleteCity').attr('action'), $('#frmDeleteCity').serialize(), function () { });
+    function Delete(id) {
+        $('#cityId').val(id);
+        $.post($('#frmDelete').attr('action'), $('#frmDelete').serialize(), function () { });
     }
 </script>

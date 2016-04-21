@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
+using Microsoft.Data.Entity;
+using ChinaTower.Verification.Models;
+using ChinaTower.Verification.Models.Infrastructures;
 
 namespace ChinaTower.Verification.Controllers
 {
@@ -13,9 +14,15 @@ namespace ChinaTower.Verification.Controllers
             return View();
         }
 
-        public IActionResult Rule()
+        public IActionResult Rule(FormType? type, string alias)
         {
-            return View();
+            IEnumerable<VerificationRule> ret = DB.VerificationRules
+                .Include(x => x.Rule);
+            if (type.HasValue)
+                ret = ret.Where(x => x.Type == type);
+            if (!string.IsNullOrEmpty(alias))
+                ret = ret.Where(x => alias.Contains(x.Alias) || x.Alias.Contains(alias));
+            return PagedView(ret);
         }
     }
 }

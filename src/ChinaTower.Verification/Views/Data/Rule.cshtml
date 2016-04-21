@@ -1,0 +1,86 @@
+﻿@model IEnumerable<VerificationRule>
+@{
+    ViewBag.Title = "校验规则管理";
+}
+
+<div class="col-md-9">
+    <div class="showback">
+        <div>
+            <form>
+                <div class="col-md-6">
+                    <input type="text" name="alias" placeholder="别名" class="form-control" />
+                </div>
+                <div class="col-md-3">
+                    <select name="type" class="form-control">
+                        <option value="">表单类型</option>
+                        @foreach (var x in Enum.GetNames(typeof(ChinaTower.Verification.Models.Infrastructures.FormType)))
+                        { 
+                            <option>@x</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <input type="submit" value="检索" class="btn btn-primary" />
+                </div>
+            </form>
+        </div>
+        <hr />
+        <div>
+            <table class="table table-bordered table-striped table-condensed">
+                <thead>
+                    <tr>
+                        <th>规则别名</th>
+                        <th>条件</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var x in Model)
+            {
+                        <tr id="rule-@x.Id">
+                            <td>@x.Id</td>
+                            <td>@x.Rule.RuleObject.Count 个主要条件</td>
+                            <td>
+                                <a asp-action="EditRule" asp-route-id="@x.Id" asp-controller="Data">编辑边界</a>
+                                <a href="javascript: deleteDialog('@x.Id' ,'rule-@x.Id')">删除</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <nav class="centered">
+                @Html.MakePager("", "active", "pagination")
+            </nav>
+        </div>
+    </div>
+</div>
+<div class="col-md-3">
+    <div class="showback">
+        <h4><i class="fa fa-angle-right"></i> 添加规则</h4>
+        <form asp-action="InsertRule" asp-controller="Data" method="post">
+            <div class="form-group">
+                <label>规则别名</label>
+                <input type="text" name="alias" class="form-control" />
+            </div>
+            <div class="form-group">
+                <label>表单类型</label>
+                <select name="type" class="form-control">
+                    @foreach (var x in Enum.GetNames(typeof(ChinaTower.Verification.Models.Infrastructures.FormType)))
+                    {
+                        <option>@x</option>
+                    }
+                </select>
+            </div>
+            <input type="submit" value="添加" class="btn btn-primary" />
+        </form>
+    </div>
+</div>
+<form asp-action="DeleteRule" asp-controller="Data" method="post" id="frmDelete">
+    <input type="hidden" name="id" id="ruleId" />
+</form>
+<script>
+    function Delete(id) {
+        $('#ruleId').val(id);
+        $.post($('#frmDelete').attr('action'), $('#frmDelete').serialize(), function () { });
+    }
+</script>

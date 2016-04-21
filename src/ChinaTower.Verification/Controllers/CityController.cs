@@ -47,7 +47,7 @@ namespace ChinaTower.Verification.Controllers
             var c = DB.Cities.Single(x => x.Id == city);
             DB.Cities.Remove(c);
             DB.SaveChanges();
-            return Redirect(Referer);
+            return Content("ok");
         }
 
         [HttpGet]

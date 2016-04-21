@@ -12,6 +12,8 @@ namespace ChinaTower.Verification.Models
 
         public DbSet<City> Cities { get; set; }
 
+        public DbSet<VerificationRule> VerificationRules { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -27,6 +29,11 @@ namespace ChinaTower.Verification.Models
                 e.HasIndex(x => x.City);
                 e.HasIndex(x => x.District);
                 e.HasIndex(x => x.StationKey);
+            });
+
+            builder.Entity<VerificationRule>(e =>
+            {
+                e.HasIndex(x => x.Type);
             });
         }
     }

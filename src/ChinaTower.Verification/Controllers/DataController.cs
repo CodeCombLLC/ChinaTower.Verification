@@ -12,5 +12,10 @@ namespace ChinaTower.Verification.Controllers
         {
             return View();
         }
+
+        public IActionResult Rule()
+        {
+            return View();
+        }
     }
 }

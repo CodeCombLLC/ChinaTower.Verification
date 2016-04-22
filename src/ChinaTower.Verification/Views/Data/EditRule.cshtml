@@ -8,6 +8,8 @@
     <div class="rule-list">
         @Model.ToHtmlString(true)
     </div>
+    <a href="javascript:;" id="btnSaveRules" class="btn btn-primary">保存</a>
+    <a href="javascript:location.reload();" class="btn btn-warning">重置</a>
 </div>
 
 <div class="modal fade" id="modalInsertRule" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -57,3 +59,7 @@
         </div>
     </div>
 </div>
+
+<form id="frmSaveRule" asp-action="EditRule" asp-controller="Data" asp-route-id="@Model.Id">
+    <input id="ruleJson" type="hidden" name="RuleJson" />
+</form>

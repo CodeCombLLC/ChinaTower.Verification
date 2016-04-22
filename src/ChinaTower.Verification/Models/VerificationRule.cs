@@ -89,7 +89,7 @@ namespace ChinaTower.Verification.Models
                     }
                     if (Editing)
                     {
-                        str.AppendLine($"<a href=\"javascript:$(this).parent('li').remove()\">删除</a>");
+                        str.AppendLine($"<a href=\"javascript:;\" onclick=\"removeRule(this)\">删除</a>");
                     }
                     if (new RuleType[] { RuleType.And, RuleType.Or, RuleType.Not }.Contains(a.Type))
                     {

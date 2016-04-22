@@ -2329,6 +2329,10 @@ hr {
         color: #fff;
     }
 
+.rule-list {
+    font-size: 16px;
+}
+
 .rule-list li {
     list-style: circle;
 }

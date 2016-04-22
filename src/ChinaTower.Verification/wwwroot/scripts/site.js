@@ -28,11 +28,42 @@ function deleteRow(id)
 
 var pos;
 
+function serializeRules(rules)
+{
+    var obj = [];
+    for (var i = 0; i < rules.length; i++) {
+        var rule = $(rules[i]);
+        var type = rule.attr('data-type');
+        if (type) {
+            switch(type)
+            {
+                case 'And':
+                case 'Or':
+                case 'Not':
+                    obj.push({ Type: type, NestedRules: serializeRules(rule.children('ul').children('li')) });
+                    break;
+                case 'Empty':
+                case 'NotEmpty':
+                    obj.push({ Type: type, ArgumentIndex: rule.attr('data-argument-index') });
+                    break;
+                default:
+                    obj.push({ Type: type, Expression: rule.attr('data-expression'), ArgumentIndex: rule.attr('data-argument-index') });
+            }
+        }
+    }
+    return obj;
+}
+
 function insertRule(p)
 {
     pos = $(p).parent();
     console.log(pos);
     $('#modalInsertRule').modal('show');
+}
+
+function removeRule(p)
+{
+    $(p).parent('li').remove();
 }
 
 $(document).ready(function () {
@@ -57,7 +88,7 @@ $(document).ready(function () {
     });
 
     $('#btnInsertRule').click(function () {
-        var str = '<li data-type="' + $('#lstRuleTypes').find('option:selected').text() + '" data-expression="' + $('#txtExpression').val() + '" data-argument-index="' + $('#lstHeaders').val() + '">';
+        var str = '<li data-type="' + $('#lstRuleTypes').val() + '" data-expression="' + $('#txtExpression').val() + '" data-argument-index="' + $('#lstHeaders').val() + '">';
         switch ($('#lstRuleTypes').val())
         {
             case 'And':
@@ -97,11 +128,17 @@ $(document).ready(function () {
                 str += '<span>' + $('#lstHeaders').find('option:selected').text() + ' 满足正则表达式 ' + $('#txtExpression').val() + '</span>';
                 break;
         }
-        str += ' <a href="javascript:$(this).parent(\'li\').remove()">删除</a>';
+        str += ' <a href="javascript:;" onclick="removeRule(this)">删除</a>';
         if ($('#lstRuleTypes').val() == 'And' || $('#lstRuleTypes').val() == 'Or' || $('#lstRuleTypes').val() == 'Not')
             str += '<ul><li class="li-insert"><a onclick="insertRule(this)" href="javascript:;">添加</a></li></ul>';
         str += '</li>';
         pos.before(str);
         $('#modalInsertRule').modal('hide');
+    });
+
+    $('#btnSaveRules').click(function () {
+        var obj = serializeRules($('.rule-list').children('ul').children('li'));
+        $('#ruleJson').val(JSON.stringify(obj));
+        $('#frmSaveRule').submit();
     });
 });

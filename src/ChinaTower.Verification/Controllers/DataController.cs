@@ -44,12 +44,31 @@ namespace ChinaTower.Verification.Controllers
             return RedirectToAction("EditRule", "Data", new { id = vr.Id });
         }
 
+        [HttpGet]
         public IActionResult EditRule(Guid id)
         {
             var rule = DB.VerificationRules
                 .Include(x => x.Rule)
                 .Single(x => x.Id == id);
             return View(rule);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult EditRule(Guid id, string RuleJson)
+        {
+            var rule = DB.VerificationRules
+                            .Include(x => x.Rule)
+                            .Single(x => x.Id == id);
+            rule.Rule.RuleJson = RuleJson;
+            DB.SaveChanges();
+            return Prompt(x =>
+            {
+                x.Title = "编辑成功";
+                x.Details = "新的校验规则已经生效！";
+                x.RedirectText = "返回规则列表";
+                x.RedirectUrl = Url.Action("Rule", "Data");
+            });
         }
     }
 }

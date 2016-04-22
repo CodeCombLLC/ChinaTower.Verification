@@ -1,0 +1,59 @@
+﻿@model VerificationRule
+@{ 
+    ViewBag.Title = "编辑规则 - " + Model.Alias;
+}
+
+<div class="showback">
+    <h4>根规则</h4>
+    <div class="rule-list">
+        @Model.ToHtmlString(true)
+    </div>
+</div>
+
+<div class="modal fade" id="modalInsertRule" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <input type="hidden" name="edge" id="edge" />
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">添加新规则</h4>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>规则类型</label>
+                    <select id="lstRuleTypes" class="form-control">
+                        <option value="And">且</option>
+                        <option value="Or">或</option>
+                        <option value="Not">非</option>
+                        <option value="Equal">等于</option>
+                        <option value="NotEqual">不等于</option>
+                        <option value="Gt">大于</option>
+                        <option value="Gte">大于等于</option>
+                        <option value="Lt">小于</option>
+                        <option value="Lte">小于等于</option>
+                        <option value="Empty">为空</option>
+                        <option value="NotEmpty">不为空</option>
+                        <option value="Regex">正则表达式</option>
+                    </select>
+                </div>
+                <div class="form-group" id="divIndexSelector">
+                    <label>字段选择</label>
+                    <select class="form-control" id="lstHeaders">
+                        @for(var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[Model.Type].Length; i++)
+                        {
+                            <option value="@i">@ChinaTower.Verification.Models.Infrastructures.Hash.Headers[Model.Type][i]</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group" id="divExpression">
+                    <label>值/表达式</label>
+                    <input type="text" class="form-control" id="txtExpression" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnCancel" type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button id="btnInsertRule" type="button" class="btn btn-primary">添加</button>
+            </div>
+        </div>
+    </div>
+</div>

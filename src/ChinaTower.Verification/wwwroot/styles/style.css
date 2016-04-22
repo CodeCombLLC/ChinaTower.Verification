@@ -2328,3 +2328,15 @@ hr {
     #re-edge-cancel .fa {
         color: #fff;
     }
+
+.rule-list li {
+    list-style: circle;
+}
+
+#divIndexSelector {
+    display: none;
+}
+
+#divExpression {
+    display: none;
+}

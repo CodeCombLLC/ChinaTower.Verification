@@ -30,18 +30,20 @@
                 <thead>
                     <tr>
                         <th>规则别名</th>
+                        <th>表单类型</th>
                         <th>条件</th>
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var x in Model)
-            {
+                    {
                         <tr id="rule-@x.Id">
-                            <td>@x.Id</td>
+                            <td>@x.Alias</td>
+                            <td>@x.Type</td>
                             <td>@x.Rule.RuleObject.Count 个主要条件</td>
                             <td>
-                                <a asp-action="EditRule" asp-route-id="@x.Id" asp-controller="Data">编辑边界</a>
+                                <a asp-action="EditRule" asp-route-id="@x.Id" asp-controller="Data">编辑规则</a>
                                 <a href="javascript: deleteDialog('@x.Id' ,'rule-@x.Id')">删除</a>
                             </td>
                         </tr>

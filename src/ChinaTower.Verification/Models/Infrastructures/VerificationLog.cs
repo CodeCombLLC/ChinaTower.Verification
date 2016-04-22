@@ -11,6 +11,8 @@ namespace ChinaTower.Verification.Models.Infrastructures
 
         public string Reason { get; set; }
 
+        public int FieldIndex { get; set; }
+
         public DateTime Time { get; set; }
     }
 }

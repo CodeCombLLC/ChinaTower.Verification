@@ -3,12 +3,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
+using Microsoft.Extensions.PlatformAbstractions;
+using CodeComb.Data.Excel;
+using ChinaTower.Verification.Models;
+using ChinaTower.Verification.Models.Infrastructures;
 
 namespace ChinaTower.Verification.Controllers
 {
     public class StationController : BaseController
     {
-        public async Task<IActionResult> Index(string StationId, string StationName,string City, string District, bool ErrorOnly)
+        public async Task<IActionResult> Index(string StationId, string StationName,string City, string District, bool ErrorOnly, [FromServices] IApplicationEnvironment env, bool raw = false)
         {
             ViewBag.Cities = DB.Cities.ToList();
             var ret = DB.Forms
@@ -31,6 +35,35 @@ namespace ChinaTower.Verification.Controllers
                     .ToList();
                 ret = ret.Where(x => cities.Contains(x.City));
             }
+            
+            // 处理导出逻辑
+            if (raw)
+            {
+                var directory = System.IO.Path.Combine(env.ApplicationBasePath, "Export");
+                if (!System.IO.Directory.Exists(directory))
+                    System.IO.Directory.CreateDirectory(directory);
+                var fname = System.IO.Path.Combine(directory, Guid.NewGuid() + ".xlsx");
+                using (var excel = ExcelStream.Create(fname))
+                using (var sheet = excel.CreateSheet("Sheet1"))
+                {
+                    var src = ret.ToList();
+                    var header = new CodeComb.Data.Excel.Infrastructure.Row();
+                    foreach (var x in Hash.Headers[FormType.站址])
+                        header.Add(x);
+                    sheet.Add(header);
+                    foreach(var x in src)
+                    {
+                        var row = new CodeComb.Data.Excel.Infrastructure.Row();
+                        row.AddRange(x.FormStringArray);
+                        sheet.Add(row);
+                    }
+                    sheet.SaveChanges();
+                }
+                var blob = System.IO.File.ReadAllBytes(fname);
+                System.IO.File.Delete(fname);
+                return File(blob, "application/vnd.ms-excel", "stations.xlsx");
+            }
+
             return PagedView(ret);
         }
     }

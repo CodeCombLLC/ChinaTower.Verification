@@ -32,10 +32,10 @@ namespace ChinaTower.Verification.Models
 
         public string FormJson { get; set; }
 
-        [MaxLength(16)]
+        [MaxLength(32)]
         public string City { get; set; }
 
-        [MaxLength(16)]
+        [MaxLength(32)]
         public string District { get; set; }
         #endregion
         #region Nested objects parsing

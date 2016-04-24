@@ -1,0 +1,90 @@
+﻿@model Form
+@{ 
+    ViewBag.Title = "站址管理 - " + Model.Name;
+    var RelatedForms = ((IEnumerable<Form>)ViewBag.RelatedForms).GroupBy(x => x.Type);
+}
+
+<div class="showback">
+    @for (var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址].Count(); i++)
+    {
+        if (i % 3 == 0)
+        {
+            @(new HtmlString("<div>"))
+        }
+        <div class="col-md-2">@ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址][i]</div>
+        @if (i < Model.FormStringArray.Count())
+        {
+            @if (Model.VerificationLogs.Any(x => x.FieldIndex == i))
+            {
+                <div class="col-md-2">@Model.FormStringArray[i]</div>
+            }
+            else
+            {
+                <div class="col-md-2" style="color:red">@Model.FormStringArray[i]</div>
+            }
+        }
+        else
+        {
+            <div class="col-md-2"><span style="color:#aaa;font-style:italic">未填写</span></div>
+        }
+        if (i % 3 == 2)
+        {
+            @(new HtmlString("</div>"))
+        }
+    }
+    <div>
+        <input type="button" onclick="editForm(@Model.Id)" />
+    </div>
+</div>
+
+@foreach(var form in RelatedForms)
+{
+    <div class="showback">
+        <h4><i class="fa fa-angle-right"></i> @form.Key.ToString()</h4>
+        <div class="scroll-table-outer">
+            <table class="table table-bordered table-striped table-condensed">
+                <thead>
+                    <tr>
+                        @foreach(var x in ChinaTower.Verification.Models.Infrastructures.Hash.Headers[form.Key])
+                        { 
+                            <th>@x</th>
+                        }
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var x in form)
+                    {
+                        <tr>
+                            @for (var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[form.Key].Count(); i++)
+                            {
+                                if (i < x.FormStringArray.Count())
+                                {
+                                    if (x.VerificationLogs.Any(y => y.FieldIndex == i))
+                                    {
+                                        <td style="color:red">@x.FormStringArray[i]</td>
+                                    }
+                                    else
+                                    {
+                                        <td>@x.FormStringArray[i]</td>
+                                    }
+                                }
+                                else
+                                {
+                                    <td style="color:#aaa;font-style:italic;">未填写</td>
+                                }
+                            }
+                            <td>
+                                @if (x.Status == ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Wrong)
+                                {
+                                    <a href="javascript:showVerifyDetails(@x.Id)">错误详情</a>
+                                }
+                                <a href="javascript:editForm(@x.Id)">编辑表单</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}

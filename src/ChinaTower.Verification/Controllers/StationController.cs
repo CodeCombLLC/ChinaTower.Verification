@@ -66,5 +66,21 @@ namespace ChinaTower.Verification.Controllers
 
             return PagedView(ret);
         }
+
+        public IActionResult Show(long id)
+        {
+            var form = DB.Forms.Single(x => x.Id == id);
+            if (form.Type != FormType.站址)
+                return Prompt(x =>
+                {
+                    x.Title = "非法操作";
+                    x.Details = "您的请求不正确，请返回重试！";
+                    x.StatusCode = 401;
+                });
+            ViewBag.RelatedForms = DB.Forms
+                .Where(x => x.Type != FormType.站址 && x.StationKey == form.Id)
+                .ToList();
+            return View(form);
+        }
     }
 }

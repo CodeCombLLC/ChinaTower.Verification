@@ -2,6 +2,44 @@
 @{
     ViewBag.Title = "城市管理";
 }
+<div class="modal fade" id="modalEditDistricts" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+    <div class="modal-dialog" role="document">
+        <form class="modal-content" asp-action="District" asp-controller="City" method="post" id="frmSaveDistrict">
+            <input type="hidden" name="district" id="district" />
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title" id="myModalLabel">编辑下属区县</h4>
+            </div>
+            <div class="modal-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>区县</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lstDistricts">
+                    </tbody>
+                </table>
+                <hr />
+                <input type="hidden" name="id" id="cityId" />
+                <input type="hidden" name="district" id="districtJson" />
+                <div class="row">
+                    <div class="col-md-9">
+                        <input type="text" class="form-control" placeholder="区县名称" id="txtDistrict" />
+                    </div>
+                    <div class="col-md-3">
+                        <input type="button" id="btnAddDistrict" class="btn btn-warning" value="添加" />
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="btnCancel" type="button" class="btn btn-default" data-dismiss="modal">取消</button>
+                <button id="btnSubmit" type="button" class="btn btn-primary">保存</button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <div class="col-md-9">
     <div class="showback">
@@ -22,17 +60,20 @@
                     <tr>
                         <th>城市名</th>
                         <th>城市范围</th>
+                        <th>下属区县</th>
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var x in Model)
-            {
+                    {
                         <tr id="city-@x.Id">
                             <td>@x.Id</td>
                             <td>@(x.Edge.Count == 0 ? "未划分" : (x.Edge.Area.ToString("0.00") + " k㎡"))</td>
+                            <td>@x.Districts.Count 个</td>
                             <td>
                                 <a asp-action="Edge" asp-route-id="@x.Id" asp-controller="City">编辑边界</a>
+                                <a href="javascript:editDistricts('@x.Id')">编辑区县</a>
                                 <a href="javascript: deleteDialog('@x.Id' ,'city-@x.Id')">删除</a>
                             </td>
                         </tr>
@@ -65,4 +106,30 @@
         $('#cityId').val(id);
         $.post($('#frmDelete').attr('action'), $('#frmDelete').serialize(), function () { });
     }
+    function editDistricts(id) {
+        $('#cityId').val(id);
+        $('#modalEditDistricts').modal('show');
+        $('#lstDistricts').html('');
+        $.getJSON('@Url.Action("GetDistricts", "City")', { id: id }, function (data) { 
+            for (var i = 0; i < data.length; i++) {
+                $('#lstDistricts').append('<tr><td class="district">' + data + '</td><td><a href="javascript:;" onclick="removeDistrict(this)">删除</a></td></tr>');
+            }
+        });
+    }
+    function removeDistrict(btn) {
+        var tr = $(btn).parent('td').parent('tr');
+        tr.remove();
+    }
+    $('#btnAddDistrict').click(function () {
+        $('#lstDistricts').append('<tr><td class="district">' + $('#txtDistrict').val() + '</td><td><a href="javascript:;" onclick="removeDistrict(this)">删除</a></td></tr>');
+        $('#lstDistricts').val('');
+    });
+    $('#btnSubmit').click(function () {
+        var array = [];
+        var dom = $('#lstDistricts').find('td.district');
+        for (var i = 0; i < dom.length; i++)
+            array.push($(dom[i]).text());
+        $('#districtJson').val(JSON.stringify(array));
+        $('#frmSaveDistrict').submit();
+    });
 </script>

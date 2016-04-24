@@ -87,5 +87,29 @@ namespace ChinaTower.Verification.Controllers
             var ret = new { Lon = obj.result.location.lng, Lat = obj.result.location.lat };
             return Json(ret);
         }
+
+        [HttpGet]
+        public IActionResult GetDistricts(string id)
+        {
+            var city = DB.Cities.Single(x => x.Id == id);
+            return Json(city.Districts);
+        }
+
+        [HttpPost]
+        [AnyRoles("Root")]
+        public IActionResult District(string district, string id)
+        {
+            var city = DB.Cities.Single(x => x.Id == id);
+            city.DistrictJson = district;
+            DB.SaveChanges();
+            return Prompt(x =>
+            {
+                x.Title = "保存成功";
+                x.Details = "下属区县信息保存成功！";
+                x.HideBack = true;
+                x.RedirectText = "返回城市列表";
+                x.RedirectUrl = Url.Action("Index", "City");
+            });
+        }
     }
 }

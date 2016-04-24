@@ -170,6 +170,7 @@ namespace ChinaTower.Verification.Controllers
                                 {
                                     form.City = fields[3];
                                     form.District = fields[4];
+                                    form.Name = fields[0];
                                     var city = DB.Cities.SingleOrDefault(x => x.Id == form.City);
                                     // 1. 判断城市是否合法
                                     if (city == null)
@@ -206,6 +207,11 @@ namespace ChinaTower.Verification.Controllers
                         }
                     }
                 }
+                try
+                {
+                    System.IO.File.Delete(fname);
+                }
+                catch { }
             });
             return Prompt(x =>
             {

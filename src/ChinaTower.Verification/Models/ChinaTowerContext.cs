@@ -29,6 +29,7 @@ namespace ChinaTower.Verification.Models
                 e.HasIndex(x => x.City);
                 e.HasIndex(x => x.District);
                 e.HasIndex(x => x.StationKey);
+                e.HasIndex(x => x.Name);
             });
 
             builder.Entity<VerificationRule>(e =>

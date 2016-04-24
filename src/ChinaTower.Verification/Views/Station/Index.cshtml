@@ -1,0 +1,84 @@
+﻿@model IEnumerable<Form>
+@{ 
+    ViewBag.Title = "站址管理";
+}
+
+<div class="showback">
+    <div>
+        <form>
+            <div class="col-md-2">
+                <input type="text" class="form-control" name="stationId" placeholder="站址编号" />
+            </div>
+            <div class="col-md-2">
+                <input type="text" class="form-control" name="stationName" placeholder="站址名称" />
+            </div>
+            <div class="col-md-2">
+                <select class="form-control" name="city" id="lstCities">
+                    <option value="">城市</option>
+                    @foreach (City x in ViewBag.Cities)
+                    {
+                        <option value="@x.Id">@x.Id</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-control" name="district" id="lstDistricts" data-parent-select="lstCities">
+                    <option data-parent-id="" value="">区县</option>
+                    @foreach (City x in ViewBag.Cities)
+                    {
+                        <option data-parent-id="@x.Id" value="">区县</option>
+                        foreach (var y in x.Districts)
+                        {
+                            <option data-parent-id="@x.Id" value="@y">@y</option>
+                        }
+                    }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="submit" value="检索" class="btn btn-primary" />
+                <input type="submit" value="导出" class="btn btn-warning" />
+            </div>
+        </form>
+    </div>
+    <hr />
+    <div>
+        <table class="table table-bordered table-striped table-condensed">
+            <thead>
+                <tr>
+                    @foreach(var x in ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址])
+                    {
+                        <th>@x</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach(var x in Model)
+                { 
+                    <tr>
+                        @for(var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址].Count(); i ++)
+                        {
+                            if (i < x.FormStringArray.Count())
+                            {
+                                if (x.VerificationLogs.Any(y => y.FieldIndex == i))
+                                {
+                                    <td style="color:red">@x.FormStringArray[i]</td>
+                                }
+                                else
+                                {
+                                    <td>@x.FormStringArray[i]</td>
+                                }
+                            }
+                            else
+                            {
+                                <td style="color:#aaa;font-style:italic">未填写</td>
+                            }
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <nav class="centered">
+            @Html.MakePager("", "active", "pagination")
+        </nav>
+    </div>
+</div>

@@ -16,6 +16,9 @@ namespace ChinaTower.Verification.Models
         [MaxLength(64)]
         public string UniqueKey { get; set; }
 
+        [MaxLength(128)]
+        public string Name { get; set; }
+
         public long? StationKey { get; set; }
 
         public DateTime VerificationTime { get; set; }

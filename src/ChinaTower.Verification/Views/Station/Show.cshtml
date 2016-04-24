@@ -1,43 +1,46 @@
 ﻿@model Form
-@{ 
+@{
     ViewBag.Title = "站址管理 - " + Model.Name;
     var RelatedForms = ((IEnumerable<Form>)ViewBag.RelatedForms).GroupBy(x => x.Type);
 }
 
 <div class="showback">
-    @for (var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址].Count(); i++)
-    {
-        if (i % 3 == 0)
+    <table class="table table-bordered">
+        @for (var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址].Count(); i++)
         {
-            @(new HtmlString("<div>"))
-        }
-        <div class="col-md-2">@ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址][i]</div>
-        @if (i < Model.FormStringArray.Count())
-        {
-            @if (Model.VerificationLogs.Any(x => x.FieldIndex == i))
+            if (i % 3 == 0)
             {
-                <div class="col-md-2">@Model.FormStringArray[i]</div>
+                @(new HtmlString("<tr>"))
+            }
+            <td style="font-weight:bold">@ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址][i]</td>
+            @if (i < Model.FormStringArray.Count())
+            {
+                @if (Model.VerificationLogs.Any(x => x.FieldIndex == i))
+                {
+                    <td style="color:red">@Model.FormStringArray[i]</td>
+                }
+                else
+                {
+                    <td>@Model.FormStringArray[i]</td>
+                }
             }
             else
             {
-                <div class="col-md-2" style="color:red">@Model.FormStringArray[i]</div>
+                <td><span style="color:#aaa;font-style:italic">未填写</span></td>
+            }
+            if (i % 3 == 2)
+            {
+                @(new HtmlString("</tr>"))
             }
         }
-        else
-        {
-            <div class="col-md-2"><span style="color:#aaa;font-style:italic">未填写</span></div>
-        }
-        if (i % 3 == 2)
-        {
-            @(new HtmlString("</div>"))
-        }
-    }
+    </table>
     <div>
-        <input type="button" onclick="editForm(@Model.Id)" />
+        <input type="button" class="btn btn-primary" value="编辑站址信息" onclick="editForm(@Model.Id)" />
+        <input type="button" class="btn btn-danger" value="错误详情" onclick="showVerifyDetails(@Model.Id)" />
     </div>
 </div>
 
-@foreach(var form in RelatedForms)
+@foreach (var form in RelatedForms)
 {
     <div class="showback">
         <h4><i class="fa fa-angle-right"></i> @form.Key.ToString()</h4>
@@ -45,15 +48,15 @@
             <table class="table table-bordered table-striped table-condensed">
                 <thead>
                     <tr>
-                        @foreach(var x in ChinaTower.Verification.Models.Infrastructures.Hash.Headers[form.Key])
-                        { 
+                        @foreach (var x in ChinaTower.Verification.Models.Infrastructures.Hash.Headers[form.Key])
+                        {
                             <th>@x</th>
                         }
                         <th>操作</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach(var x in form)
+                    @foreach (var x in form)
                     {
                         <tr>
                             @for (var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[form.Key].Count(); i++)

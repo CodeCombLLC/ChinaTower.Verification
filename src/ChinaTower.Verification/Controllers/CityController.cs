@@ -97,7 +97,7 @@ namespace ChinaTower.Verification.Controllers
 
         [HttpPost]
         [AnyRoles("Root")]
-        public IActionResult District(string district, string id)
+        public IActionResult District(string id, string district)
         {
             var city = DB.Cities.Single(x => x.Id == id);
             city.DistrictJson = district;

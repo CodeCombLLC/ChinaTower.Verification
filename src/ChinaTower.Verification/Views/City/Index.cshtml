@@ -5,7 +5,6 @@
 <div class="modal fade" id="modalEditDistricts" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
     <div class="modal-dialog" role="document">
         <form class="modal-content" asp-action="District" asp-controller="City" method="post" id="frmSaveDistrict">
-            <input type="hidden" name="district" id="district" />
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="myModalLabel">编辑下属区县</h4>
@@ -25,10 +24,10 @@
                 <input type="hidden" name="id" id="cityId" />
                 <input type="hidden" name="district" id="districtJson" />
                 <div class="row">
-                    <div class="col-md-9">
+                    <div class="col-md-8">
                         <input type="text" class="form-control" placeholder="区县名称" id="txtDistrict" />
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-4">
                         <input type="button" id="btnAddDistrict" class="btn btn-warning" value="添加" />
                     </div>
                 </div>
@@ -122,7 +121,7 @@
     }
     $('#btnAddDistrict').click(function () {
         $('#lstDistricts').append('<tr><td class="district">' + $('#txtDistrict').val() + '</td><td><a href="javascript:;" onclick="removeDistrict(this)">删除</a></td></tr>');
-        $('#lstDistricts').val('');
+        $('#txtDistrict').val('');
     });
     $('#btnSubmit').click(function () {
         var array = [];

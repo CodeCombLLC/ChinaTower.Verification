@@ -35,14 +35,15 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <input type="submit" value="检索" class="btn btn-primary" />
-                <input type="submit" value="导出" class="btn btn-warning" />
+                <input type="hidden" name="raw" value="false" id="raw" />
+                <input id="btnSearch" type="submit" value="检索" class="btn btn-primary" />
+                <input id="btnExport" type="submit" value="导出" class="btn btn-warning" />
             </div>
         </form>
     </div>
     <hr />
-    <div>
-        <table class="table table-bordered table-striped table-condensed">
+    <div class="scroll-table-outer">
+        <table class="table table-bordered table-striped table-condensed scroll-table">
             <thead>
                 <tr>
                     @foreach(var x in ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址])
@@ -55,17 +56,32 @@
                 @foreach(var x in Model)
                 { 
                     <tr>
-                        @for(var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址].Count(); i ++)
+                        @for (var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址].Count(); i++)
                         {
                             if (i < x.FormStringArray.Count())
                             {
                                 if (x.VerificationLogs.Any(y => y.FieldIndex == i))
                                 {
-                                    <td style="color:red">@x.FormStringArray[i]</td>
+                                    if (i == 0)
+                                    {
+                                        <td><a asp-action="Show" asp-controller="Station" asp-route-id="@x.Id" style="color:red">@x.FormStringArray[i]</a></td>
+                                    }
+                                    else
+                                    {
+                                        <td style="color:red">@x.FormStringArray[i]</td>
+                                    }
+
                                 }
                                 else
                                 {
-                                    <td>@x.FormStringArray[i]</td>
+                                    if (i == 0)
+                                    {
+                                        <td><a asp-action="Show" asp-controller="Station" asp-route-id="@x.Id">@x.FormStringArray[i]</a></td>
+                                    }
+                                    else
+                                    {
+                                        <td>@x.FormStringArray[i]</td>
+                                    }
                                 }
                             }
                             else
@@ -82,3 +98,11 @@
         </nav>
     </div>
 </div>
+<script>
+    $('#btnSearch').click(function () {
+        $('#raw').val('false');
+    });
+    $('#btnExport').click(function () {
+        $('#raw').val('true');
+    });
+</script>

@@ -53,7 +53,7 @@ namespace ChinaTower.Verification.Models.Infrastructures
             { FormType.铁塔, 13 },
             { FormType.铁塔平面, null },
             { FormType.整流器设备, null },
-            { FormType.站址, 5 },
+            { FormType.站址, 8 },
             { FormType.UPS, null },
             { FormType.变压稳压, null },
             { FormType.功分器, null }
@@ -79,7 +79,7 @@ namespace ChinaTower.Verification.Models.Infrastructures
             { FormType.铁塔, 14 },
             { FormType.铁塔平面, null },
             { FormType.整流器设备, null },
-            { FormType.站址, 6 },
+            { FormType.站址, 9 },
             { FormType.UPS, null },
             { FormType.变压稳压, null },
             { FormType.功分器, null }

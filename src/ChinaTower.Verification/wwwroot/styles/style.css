@@ -2344,3 +2344,14 @@ hr {
 #divExpression {
     display: none;
 }
+
+.scroll-table {
+    width: auto;
+    word-break: keep-all;
+    white-space:nowrap;
+}
+
+.scroll-table-outer {
+    overflow-x: scroll;
+    width: 100%;
+}

@@ -137,6 +137,7 @@ namespace ChinaTower.Verification.Controllers
                                     verifyResult.Information = "";
                                     verifyResult.FailedRules = new List<CodeComb.Data.Verification.Rule>();
                                 }
+                                // 获取字段校验结果
                                 var logs = new List<VerificationLog>();
                                 foreach (var x in verifyResult.FailedRules)
                                     logs.Add(new VerificationLog
@@ -154,17 +155,52 @@ namespace ChinaTower.Verification.Controllers
                                     UniqueKey = fields[Hash.UniqueKey[type]],
                                     VerificationJson = JsonConvert.SerializeObject(logs),
                                     VerificationTime = DateTime.Now,
-                                    Status = verifyResult.IsSuccess ? VerificationStatus.Accepted : VerificationStatus.Wrong
+                                    Status = verifyResult.IsSuccess ? VerificationStatus.Accepted : VerificationStatus.Wrong,
+                                    City = "",
+                                    District = ""
                                 };
+                                // 获取经纬度
                                 if (Hash.Lat[type] != null && Hash.Lon[type] != null)
                                 {
                                     form.Lat = Convert.ToDouble(fields[Hash.Lat[type].Value]);
                                     form.Lon = Convert.ToDouble(fields[Hash.Lon[type].Value]);
-                                    DB.Database.ExecuteSqlCommand("INSERT INTO \"Form\" (FormJson, StationKey, Type, UniqueKey, VerificationJson, VerificationTime, Status, Lon, Lat) VALUES ('{0}', {1}, {2}, '{3}', '{4}', '{5}', {6}, {7}, {8});", form.FormJson, form.StationKey, form.Type, form.UniqueKey, form.VerificationJson, form.VerificationTime, (int)form.Status, form.Lon, form.Lat);
+                                }
+                                // 如果是站址需要额外判断
+                                if (type == FormType.站址)
+                                {
+                                    form.City = fields[3];
+                                    form.District = fields[4];
+                                    var city = DB.Cities.SingleOrDefault(x => x.Id == form.City);
+                                    // 1. 判断城市是否合法
+                                    if (city == null)
+                                    {
+                                        var l = form.VerificationLogs;
+                                        l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][3], FieldIndex = 3, Reason = $"不存在城市{form.City}" });
+                                        form.VerificationJson = JsonConvert.SerializeObject(l);
+                                    }
+                                    // 2. 判断区县是否合法
+                                    else if (!city.Districts.Contains(form.District))
+                                    {
+                                        var l = form.VerificationLogs;
+                                        l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][4], FieldIndex = 4, Reason = $"{city.Id}中不存在区县{form.District}" });
+                                        form.VerificationJson = JsonConvert.SerializeObject(l);
+                                    }
+                                    // 3. 判断经纬度是否合法
+                                    else if (!city.Edge.IsInPolygon(new CodeComb.Algorithm.Geography.Point { X = form.Lon.Value, Y = form.Lat.Value, Type = CodeComb.Algorithm.Geography.PointType.WGS }))
+                                    {
+                                        var l = form.VerificationLogs;
+                                        l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][Hash.Lon[type].Value], FieldIndex = Hash.Lon[type].Value, Reason = $"({form.Lon.Value}, {form.Lat.Value})不属于{form.City}" });
+                                        l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][Hash.Lat[type].Value], FieldIndex = Hash.Lat[type].Value, Reason = $"({form.Lon.Value}, {form.Lat.Value})不属于{form.City}" });
+                                        form.VerificationJson = JsonConvert.SerializeObject(l);
+                                    }
+                                }
+                                if (Hash.Lat[type] != null && Hash.Lon[type] != null)
+                                {
+                                    DB.Database.ExecuteSqlCommand("INSERT INTO \"Form\" (FormJson, StationKey, Type, UniqueKey, VerificationJson, VerificationTime, Status, Lon, Lat, City, District) VALUES ('{0}', {1}, {2}, '{3}', '{4}', '{5}', {6}, {7}, {8}, '{9}', '{10}');", form.FormJson, form.StationKey, form.Type, form.UniqueKey, form.VerificationJson, form.VerificationTime, (int)form.Status, form.Lon, form.Lat, form.City, form.District);
                                 }
                                 else
                                 {
-                                    DB.Database.ExecuteSqlCommand("INSERT INTO \"Form\" (FormJson, StationKey, Type, UniqueKey, VerificationJson, VerificationTime, Status) VALUES ('{0}', {1}, {2}, '{3}', '{4}', '{5}', {6});", form.FormJson, form.StationKey, form.Type, form.UniqueKey, form.VerificationJson, form.VerificationTime, (int)form.Status);
+                                    DB.Database.ExecuteSqlCommand("INSERT INTO \"Form\" (FormJson, StationKey, Type, UniqueKey, VerificationJson, VerificationTime, Status, City, District) VALUES ('{0}', {1}, {2}, '{3}', '{4}', '{5}', {6}, '{7}', '{8}');", form.FormJson, form.StationKey, form.Type, form.UniqueKey, form.VerificationJson, form.VerificationTime, (int)form.Status, form.City, form.District);
                                 }
                             }
                         }

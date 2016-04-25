@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using Microsoft.AspNet.Authorization;
+using Microsoft.Data.Entity;
 
 namespace ChinaTower.Verification.Controllers
 {
@@ -32,6 +33,16 @@ namespace ChinaTower.Verification.Controllers
                     x.Details = "用户名或密码不正确，请返回重新登录！";
                     x.StatusCode = 401;
                 });
+        }
+
+        [AnyRoles("Root")]
+        public IActionResult Index()
+        {
+            var users = UserManager.Users
+                .Include(x => x.Claims)
+                .Include(x => x.Roles)
+                .ToList();
+            return View(users);
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using Microsoft.AspNet.Authorization;
 using Microsoft.Data.Entity;
+using ChinaTower.Verification.Models;
 
 namespace ChinaTower.Verification.Controllers
 {
@@ -13,10 +14,12 @@ namespace ChinaTower.Verification.Controllers
     {
         public IActionResult Index()
         {
-            var logs = DB.Logs
+            IEnumerable<Log> logs = DB.Logs
                 .Include(x => x.User)
                 .Include(x => x.Form)
                 .OrderByDescending(x => x.Id);
+            if (!User.IsInRole("Root"))
+                logs = logs.Where(x => x.UserId == User.Current.Id);
             return PagedView(logs);
         }
 

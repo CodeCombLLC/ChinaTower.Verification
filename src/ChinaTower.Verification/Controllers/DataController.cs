@@ -111,8 +111,12 @@ namespace ChinaTower.Verification.Controllers
         {
             using (var serviceScope = Resolver.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
-                Task.Factory.StartNew(() =>
+                var userEmail = User.Current.Email;
+                Task.Factory.StartNew(async () =>
                 {
+                    var count = 0;
+                    var addition = 0;
+                    var updated = 0;
                     using (var db = serviceScope.ServiceProvider.GetService<ChinaTowerContext>())
                     {
                         var directory = System.IO.Path.Combine(env.ApplicationBasePath, "Upload");
@@ -141,6 +145,7 @@ namespace ChinaTower.Verification.Controllers
                                         // 如果与表头字段相似度过半则认定为表头
                                         if ((double)similar / (double)total >= 0.5)
                                             continue;
+                                        count++;
                                         var fields = new List<string>();
                                         for (var i = 0; i < Hash.Headers[type].Count(); i++)
                                         {
@@ -160,7 +165,7 @@ namespace ChinaTower.Verification.Controllers
                                         {
                                             verifyResult.IsSuccess = true;
                                             verifyResult.Information = "";
-                                            verifyResult.FailedRules = new List<CodeComb.Data.Verification.Rule>();
+                                            verifyResult.FailedRules = new List<Rule>();
                                         }
                                         // 获取字段校验结果
                                         var logs = new List<VerificationLog>();
@@ -244,6 +249,7 @@ namespace ChinaTower.Verification.Controllers
                                         // 如果数据库中没有这条数据，则写入
                                         if (existedForm == null)
                                         {
+                                            addition++;
                                             if (Hash.Lat[type] != null && Hash.Lon[type] != null)
                                             {
                                                 db.Database.ExecuteSqlCommand("INSERT INTO \"Form\" (\"FormJson\", \"StationKey\", \"Type\", \"UniqueKey\", \"VerificationJson\", \"VerificationTime\",\"Status\", \"Lon\", \"Lat\", \"City\", \"District\", \"Name\") VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11});", form.FormJson, form.StationKey, form.Type, form.UniqueKey, form.VerificationJson, form.VerificationTime, (int)form.Status, form.Lon, form.Lat, form.City, form.District, form.Name);
@@ -256,23 +262,27 @@ namespace ChinaTower.Verification.Controllers
                                         // 否则更新
                                         else
                                         {
-                                            existedForm.Name = form.Name;
-                                            existedForm.Lon = form.Lon;
-                                            existedForm.Lat = form.Lat;
-                                            existedForm.StationKey = form.StationKey;
-                                            existedForm.Status = form.Status;
-                                            existedForm.Type = form.Type;
-                                            existedForm.VerificationJson = form.VerificationJson;
-                                            existedForm.VerificationTime = form.VerificationTime;
-                                            existedForm.UniqueKey = form.UniqueKey;
-                                            existedForm.City = form.City;
-                                            existedForm.District = form.District;
-                                            db.SaveChanges();
+                                            updated++;
+                                            db.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Name\" = {0}, \"Lon\" = {1}, \"Lat\" = {2}, \"StationKey\" = {3}, \"Status\" = {4}, \"Type\" = {5}, \"VerificationJson\" = {6}, \"VerificationTime\" = {7}, \"UniqueKey\" = {8}, \"City\" = {9}, \"District\" = {10} WHERE \"UniqueKey\" = {11}",
+                                                form.Name,
+                                                form.Lon,
+                                                form.Lat,
+                                                form.StationKey,
+                                                form.Status,
+                                                (int)form.Type,
+                                                form.VerificationJson,
+                                                form.VerificationTime,
+                                                form.UniqueKey,
+                                                form.City,
+                                                form.District,
+                                                form.UniqueKey);
                                         }
                                     }
                                 }
                             }
                         }
+                        var email = serviceScope.ServiceProvider.GetRequiredService<IEmailSender>();
+                        await email.SendEmailAsync(userEmail, "导入数据完成", $"本次导入数据已于 { DateTime.Now.ToString("yyyy年MM月dd日 HH时mm分") } 完成，共 {count} 条数据。其中新增 {addition} 条，更新 {updated} 条。");
                         try
                         {
                             System.IO.File.Delete(fname);
@@ -288,14 +298,34 @@ namespace ChinaTower.Verification.Controllers
             });
         }
 
+        /// <summary>
+        /// 展示校验管理界面
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
-        public IActionResult Verify()
+        public async Task<IActionResult> Verify()
         {
-            var ret = DB.Forms
+            IEnumerable<Form> ret = DB.Forms
                 .Where(x => x.Status != VerificationStatus.Accepted);
+            if (!User.IsInRole("Root"))
+            {
+                var cities = (await UserManager.GetClaimsAsync(User.Current))
+                    .Where(x => x.Type == "管辖市区")
+                    .Select(x => x.Value)
+                    .ToList();
+                var allc = DB.Cities.Select(x => x.Id).ToList();
+                ret = ret.Where(x => cities.Contains(x.City) || !cities.Contains(x.City) && !allc.Contains(x.City));
+            }
+            ret = ret.OrderBy(x => x.City)
+                .ThenBy(x => x.District);
             return PagedView(ret);
         }
 
+        /// <summary>
+        /// 对用户所选定范围进行数据校验
+        /// </summary>
+        /// <param name="PendingOnly"></param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public IActionResult Verify(bool PendingOnly)
@@ -303,6 +333,7 @@ namespace ChinaTower.Verification.Controllers
             using (var serviceScope = Resolver.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var userEmail = User.Current.Email;
+                var uid = User.Current.Id;
                 Task.Factory.StartNew(()=>
                 {
                     using (var db = serviceScope.ServiceProvider.GetService<ChinaTowerContext>())
@@ -310,7 +341,16 @@ namespace ChinaTower.Verification.Controllers
                         var total = 0;
                         var failed = 0;
                         if (!PendingOnly)
-                            db.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\" = {0} WHERE \"Status\" <> {0}", 2);
+                        {
+                            if (User.IsInRole("Root"))
+                            {
+                                db.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\" = {0} WHERE \"Status\" <> {0}", 2);
+                            }
+                            else
+                            {
+                                db.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\" = {0} WHERE \"Status\" <> {0} AND \"City\" IN (SELECT \"ClaimValue\" FROM \"AspNetUserClaims\" WHERE \"UserId\" = {1} AND \"ClaimType\" = {2})", 2, uid, "管辖市区");
+                            }
+                        }
                         var Cities = db.Cities.ToList();
                         var Rules = db.VerificationRules.ToList();
                         using (var conn = new NpgsqlConnection(Startup.ConnectionString))

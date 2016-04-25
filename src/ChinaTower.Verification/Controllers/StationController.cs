@@ -42,7 +42,8 @@ namespace ChinaTower.Verification.Controllers
                     .Where(x => x.Type == "管辖市区")
                     .Select(x => x.Value)
                     .ToList();
-                ret = ret.Where(x => cities.Contains(x.City));
+                var allc = DB.Cities.Select(x => x.Id).ToList();
+                ret = ret.Where(x => cities.Contains(x.City) || !cities.Contains(x.City) && !allc.Contains(x.City));
             }
             
             // 处理导出逻辑

@@ -1,0 +1,44 @@
+﻿@model Log
+@{ 
+    Layout = null;
+}
+
+<h4><i class="fa fa-angle-right"></i> 修改前</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            @foreach(var x in ChinaTower.Verification.Models.Infrastructures.Hash.Headers[Model.Form.Type])
+            {
+                <th>@x</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            @for (var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[Model.Form.Type].Count(); i++)
+            { 
+                <td>@Model.Origin[i]</td>
+            }
+        </tr>
+    </tbody>
+</table>
+
+<h4><i class="fa fa-angle-right"></i> 修改后</h4>
+<table class="table table-bordered">
+    <thead>
+        <tr>
+            @foreach (var x in ChinaTower.Verification.Models.Infrastructures.Hash.Headers[Model.Form.Type])
+            {
+                <th>@x</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            @for (var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[Model.Form.Type].Count(); i++)
+            {
+                <td>@Model.Modified[i]</td>
+            }
+        </tr>
+    </tbody>
+</table>

@@ -216,20 +216,15 @@
                     }
 
                     <li class="sub-menu">
-                        <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Data" && ViewContext.RouteData.Values["action"].ToString() == "Import" ? "active" : "")" asp-controller="Data" asp-action="Import">
-                            <i class="fa fa-download"></i>
-                            <span>数据导入</span>
-                        </a>
-                    </li>
-
-                    <li class="sub-menu">
-                        <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Data" && ViewContext.RouteData.Values["action"].ToString() != "Import"  ? "active" : "")" href="javascript:;">
+                        <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Data" ? "active" : "")" href="javascript:;">
                             <i class="fa fa-check-square"></i>
-                            <span>数据校验</span>
+                            <span>数据管理</span>
                         </a>
                         <ul class="sub">
-                            <li><a asp-action="Verify" asp-controller="Data">数据检测</a></li>
+                            <li><a asp-action="Import" asp-controller="Data">导入数据</a></li>
+                            <li><a asp-action="Verify" asp-controller="Data">数据校验</a></li>
                             <li><a asp-action="Rule" asp-controller="Data">规则设定</a></li>
+                            <li><a asp-action="Clear" asp-controller="Data">清空数据</a></li>
                         </ul>
                     </li>
 
@@ -237,6 +232,13 @@
                         <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Station" ? "active" : "")" asp-controller="Station" asp-action="Index">
                             <i class="fa fa-map-marker"></i>
                             <span>站址信息</span>
+                        </a>
+                    </li>
+
+                    <li class="sub-menu">
+                        <a class="@(ViewContext.RouteData.Values["controller"].ToString() == "Log" ? "active" : "")" asp-controller="Log" asp-action="Index">
+                            <i class="fa fa-folder-open-o"></i>
+                            <span>日志查询</span>
                         </a>
                     </li>
 

@@ -182,3 +182,11 @@ function showVerifyDetails(id)
         $('#divVerifyLog').html(data);
     });
 }
+
+function showLogDetails(id) {
+    $('#divLogs').html('');
+    $('#modalLogs').modal('show');
+    $.get('/Log/Detail/' + id, {}, function (data) {
+        $('#divLogs').html(data);
+    });
+}

@@ -5,8 +5,10 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using Microsoft.AspNet.Authorization;
+using Microsoft.Data.Entity;
 using Newtonsoft.Json;
 using ChinaTower.Verification.Models;
+using ChinaTower.Verification.Models.Infrastructures;
 
 namespace ChinaTower.Verification.Controllers
 {
@@ -48,6 +50,7 @@ namespace ChinaTower.Verification.Controllers
             var c = DB.Cities.Single(x => x.Id == city);
             DB.Cities.Remove(c);
             DB.SaveChanges();
+            DB.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", FormType.站址);
             return Content("ok");
         }
 
@@ -68,6 +71,7 @@ namespace ChinaTower.Verification.Controllers
         {
             var city = DB.Cities.Single(x => x.Id == id);
             city.EdgeJson = edge;
+            DB.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", FormType.站址);
             DB.SaveChanges();
             return Prompt(x =>
             {
@@ -103,6 +107,7 @@ namespace ChinaTower.Verification.Controllers
             var city = DB.Cities.Single(x => x.Id == id);
             city.DistrictJson = district;
             DB.SaveChanges();
+            DB.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", FormType.站址);
             return Prompt(x =>
             {
                 x.Title = "保存成功";

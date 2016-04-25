@@ -7,17 +7,17 @@
     <div>
         <form>
             <div class="col-md-2">
-                <input type="text" class="form-control" name="stationId" placeholder="站址编号" />
+                <input type="text" class="form-control" name="stationId" placeholder="站址编号" value="@Context.Request.Query["stationId"]" />
             </div>
             <div class="col-md-2">
-                <input type="text" class="form-control" name="stationName" placeholder="站址名称" />
+                <input type="text" class="form-control" name="stationName" placeholder="站址名称" @Context.Request.Query["stationName"] />
             </div>
             <div class="col-md-2">
                 <select class="form-control" name="city" id="lstCities">
                     <option value="">城市</option>
                     @foreach (City x in ViewBag.Cities)
                     {
-                        <option value="@x.Id">@x.Id</option>
+                        <!option value="@x.Id" @(Context.Request.Query["city"] == x.Id ? "selected" : "")>@x.Id</!option>
                     }
                 </select>
             </div>
@@ -29,9 +29,17 @@
                         <option data-parent-id="@x.Id" value="">区县</option>
                         foreach (var y in x.Districts)
                         {
-                            <option data-parent-id="@x.Id" value="@y">@y</option>
+                            <!option data-parent-id="@x.Id" value="@y" @(Context.Request.Query["district"] == y ? "selected" :"")>@y</!option>
                         }
                     }
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-control" name="status">
+                    <option value="">校验状态</option>
+                    <!option value="Accepted" @(Context.Request.Query["status"] == "Accepted" ? "selected" : "")>校验通过</!option>
+                    <!option value="Wrong" @(Context.Request.Query["status"] == "Wrong" ? "selected" : "")>校验未通过</!option>
+                    <!option value="Pending" @(Context.Request.Query["status"] == "Pending" ? "selected" : "")>待校验</!option>
                 </select>
             </div>
             <div class="col-md-2">

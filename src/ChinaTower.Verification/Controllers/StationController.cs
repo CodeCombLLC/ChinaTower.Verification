@@ -21,13 +21,13 @@ namespace ChinaTower.Verification.Controllers
     {
         public static List<Export> Exports = new List<Export>();
 
-        public async Task<IActionResult> Index(string StationId, string StationName,string City, string District, bool ErrorOnly, [FromServices] IApplicationEnvironment env, bool raw = false)
+        public async Task<IActionResult> Index(string StationId, string StationName,string City, string District, VerificationStatus? Status, [FromServices] IApplicationEnvironment env, bool raw = false)
         {
             ViewBag.Cities = DB.Cities.ToList();
             var ret = DB.Forms
                 .Where(x => x.Type == FormType.站址);
-            if (ErrorOnly)
-                ret = ret.Where(x => x.Status == VerificationStatus.Wrong);
+            if (Status.HasValue)
+                ret = ret.Where(x => x.Status == Status.Value);
             if (!string.IsNullOrEmpty(City))
                 ret = ret.Where(x => x.City == City);
             if (!string.IsNullOrEmpty(District))

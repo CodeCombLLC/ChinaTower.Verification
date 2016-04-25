@@ -52,7 +52,7 @@ namespace ChinaTower.Verification.Controllers
             };
             DB.VerificationRules.Add(vr);
             DB.SaveChanges();
-            DB.Database.ExecuteSqlCommand("UPDATE \"Forms\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", type);
+            DB.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", type);
             return RedirectToAction("EditRule", "Data", new { id = vr.Id });
         }
 
@@ -77,7 +77,7 @@ namespace ChinaTower.Verification.Controllers
                 flag = true;
             rule.Rule.RuleJson = RuleJson;
             DB.SaveChanges();
-            DB.Database.ExecuteSqlCommand("UPDATE \"Forms\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", rule.Type);
+            DB.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", rule.Type);
             return Prompt(x =>
             {
                 x.Title = "编辑成功";
@@ -95,7 +95,7 @@ namespace ChinaTower.Verification.Controllers
                             .Single(x => x.Id == id);
             DB.VerificationRules.Remove(rule);
             DB.SaveChanges();
-            DB.Database.ExecuteSqlCommand("UPDATE \"Forms\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", rule.Type);
+            DB.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", rule.Type);
             return Content("ok");
         }
 

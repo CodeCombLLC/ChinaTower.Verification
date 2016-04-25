@@ -1,0 +1,23 @@
+﻿@model User
+@{ 
+    Layout = null;
+}
+<div class="form-group">
+    <label>密码</label>
+    <input type="password" name="password" class="form-control" placeholder="不修改请留空" />
+</div>
+<div class="form-group">
+    <label>Email</label>
+    <input type="text" name="email" class="form-control" value="@Model.Email" />
+</div>
+<div class="form-group">
+    <label>角色</label>
+    <select class="form-control" name="role">
+        <!option value="Member" @((await User.Manager.GetRolesAsync(Model)).First() == "Member" ? "selected" : "")>用户</!option>
+        <!option value="Root"@((await User.Manager.GetRolesAsync(Model)).First() == "Root" ? "selected" : "")>管理员</!option>
+    </select>
+</div>
+<div class="form-group">
+    <label>管辖市区（管理员级用户请留空）</label>
+    <input type="text" name="cities" class="form-control" value="@(string.Join(", ",(await User.Manager.GetClaimsAsync(Model)).Where(x => x.Type == "管辖市区").Select(x => x.Value)))" />
+</div>

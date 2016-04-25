@@ -107,16 +107,25 @@ namespace ChinaTower.Verification.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Import(FormType type, IFormFile file, [FromServices] IApplicationEnvironment env)
+        public async Task<IActionResult> Import(FormType type, IFormFile file, [FromServices] IApplicationEnvironment env)
         {
             using (var serviceScope = Resolver.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
                 var userEmail = User.Current.Email;
+                var IsRoot = User.IsInRole("Root");
+                var cities = (await UserManager.GetClaimsAsync(User.Current))
+                    .Where(x => x.Type == "管辖市区")
+                    .Select(x => x.Value)
+                    .ToList();
+                var allc = DB.Cities
+                    .Select(x => x.Id)
+                    .ToList();
                 Task.Factory.StartNew(async () =>
                 {
                     var count = 0;
                     var addition = 0;
                     var updated = 0;
+                    var ignored = 0;
                     using (var db = serviceScope.ServiceProvider.GetService<ChinaTowerContext>())
                     {
                         var directory = System.IO.Path.Combine(env.ApplicationBasePath, "Upload");
@@ -207,6 +216,11 @@ namespace ChinaTower.Verification.Controllers
                                         if (type == FormType.站址)
                                         {
                                             form.City = fields[3];
+                                            if (!IsRoot && !cities.Contains(form.City) && allc.Contains(form.City))
+                                            {
+                                                ignored++;
+                                                continue;
+                                            }
                                             form.District = fields[4];
                                             form.Name = fields[0];
                                             var city = db.Cities.SingleOrDefault(x => x.Id == form.City);
@@ -282,7 +296,7 @@ namespace ChinaTower.Verification.Controllers
                             }
                         }
                         var email = serviceScope.ServiceProvider.GetRequiredService<IEmailSender>();
-                        await email.SendEmailAsync(userEmail, "导入数据完成", $"本次导入数据已于 { DateTime.Now.ToString("yyyy年MM月dd日 HH时mm分") } 完成，共 {count} 条数据。其中新增 {addition} 条，更新 {updated} 条。");
+                        await email.SendEmailAsync(userEmail, "导入数据完成", $"本次导入数据已于 { DateTime.Now.ToString("yyyy年MM月dd日 HH时mm分") } 完成，共 {count} 条数据。其中新增 {addition} 条，更新 {updated} 条{ (ignored > 0 ? $"，有 { ignored } 条数据不属于您的管辖区，因此系统没有允许您导入这些数据" : "") }。");
                         try
                         {
                             System.IO.File.Delete(fname);
@@ -446,6 +460,29 @@ namespace ChinaTower.Verification.Controllers
             {
                 x.Title = "正在校验";
                 x.Details = "系统正在校验数据，在完成校验后系统将给您发送一封电子邮件通知您，请您耐心等待！";
+            });
+        }
+
+        [HttpGet]
+        [AnyRoles("Root")]
+        public IActionResult Clear()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        [AnyRoles("Root")]
+        [ValidateAntiForgeryToken]
+        public IActionResult Clear(FormType[] types)
+        {
+            foreach(var x in types)
+            {
+                DB.Database.ExecuteSqlCommand("DELETE FROM \"Form\" WHERE \"Type\" = {0}", (int)x);
+            }
+            return Prompt(x =>
+            {
+                x.Title = "清空成功";
+                x.Details = "您所选择的表单已经全部清空";
             });
         }
     }

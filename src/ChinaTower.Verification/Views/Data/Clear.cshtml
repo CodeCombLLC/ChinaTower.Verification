@@ -1,0 +1,38 @@
+﻿@{ 
+    ViewBag.Title = "清空数据";
+}
+<div class="showback">
+    <form asp-action="Clear" asp-controller="Data" method="post" id="frmClear">
+        <table class="table table-bordered">
+            @{ var i = 0; }
+            @foreach (var x in Enum.GetNames(typeof(ChinaTower.Verification.Models.Infrastructures.FormType)))
+            {
+                if (i % 5 == 0)
+                {
+                    @(new HtmlString("<tr>"))
+                }
+                <td><label><input type="checkbox" name="types" value="@x" /> @x</label></td>
+                if (i % 5 == 4)
+                {
+                    @(new HtmlString("</tr>"))
+                }
+                { i++; }
+            }
+        </table>
+        <input id="btnDeleteSelected" type="button" class="btn btn-warning" value="删除所选" />
+        <input id="btnDeleteAll" type="button" class="btn btn-danger" value="删除全部" />
+    </form>
+</div>
+<script>
+    $('#btnDeleteSelected').click(function () {
+        if (confirm("您确定要清空这些表单吗？"))
+            $('#frmClear').submit();
+    });
+    $('#btnDeleteAll').click(function () {
+        if (confirm("您确定要清空这些表单吗？"))
+        {
+            $('input[type="checkbox"]').attr('checked', true);
+            $('#frmClear').submit();
+        }
+    });
+</script>

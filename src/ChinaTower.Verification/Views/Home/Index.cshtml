@@ -1,3 +1,49 @@
-﻿@{ 
-    ViewBag.Title = "首页";
+﻿@model Dictionary<string, Dictionary<ChinaTower.Verification.Models.Infrastructures.VerificationStatus, int>>
+@{
+    ViewBag.Title = "仪表盘";
 }
+
+<div class="showback">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>城市</th>
+                <th>待校验</th>
+                <th>校验未通过</th>
+                <th>校验通过</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach(var x in Model)
+            {
+                <tr>
+                    <td>@x.Key</td>
+                    @if (x.Value.ContainsKey(ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Pending))
+                    {
+                        <td>@x.Value[ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Pending]</td>
+                    }
+                    else
+                    {
+                        <td>0</td>
+                    }
+                    @if (x.Value.ContainsKey(ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Wrong))
+                    {
+                        <td>@x.Value[ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Wrong]</td>
+                    }
+                    else
+                    {
+                        <td>0</td>
+                    }
+                    @if (x.Value.ContainsKey(ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Accepted))
+                    {
+                        <td>@x.Value[ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Accepted]</td>
+                    }
+                    else
+                    {
+                        <td>0</td>
+                    }
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>

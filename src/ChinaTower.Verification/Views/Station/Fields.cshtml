@@ -1,0 +1,35 @@
+﻿@model Form
+@{ 
+    Layout = null;
+    var Headers = (string[])ViewBag.Headers;
+    var Rules = (IEnumerable<VerificationRule>)ViewBag.Rules;
+}
+
+<table class="table table-bordered">
+    @for (var i = 0; i < Headers.Count(); i++)
+    {
+        @if (i % 3 == 0)
+        {
+            @(new HtmlString("<tr>"))
+        }
+        if (Rules.Count() == 1 && Rules.First().Rule.RuleObject.Count == 1 && Rules.First().Rule.RuleObject.First().Type == CodeComb.Data.Verification.RuleType.Or && Rules.First().Rule.RuleObject.First().NestedRules.All(r => r.Type == CodeComb.Data.Verification.RuleType.Equal))
+        {
+            <td>
+                <select name="field" class="form-control">
+                    @foreach(var x in Rules.First().Rule.RuleObject.First().NestedRules)
+                    {
+                        <!option @(x.Expression == Model.FormStringArray[i] ? "selected" : "")>@x.Expression</!option>
+                    }
+                </select>
+            </td>
+        }
+        else
+        {
+            <input type="text" class="form-control" value="@Model.FormStringArray[i]" name="field" />
+        }
+        if (i%3 == 2)
+        {
+            @(new HtmlString("</tr>"))
+        }
+    }
+</table>

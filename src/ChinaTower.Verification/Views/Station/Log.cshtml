@@ -1,0 +1,17 @@
+﻿@model Form
+@{ 
+    Layout = null;
+    var Rules = (IEnumerable<VerificationRule>)ViewBag.Rules;
+}
+
+@foreach (var x in Rules)
+{
+    <h4><i class="fa fa-angle-right"></i> @x.Alias</h4>
+    @x.ToHtmlString();
+}
+<script>
+    @foreach(var x in Model.VerificationLogs)
+    {
+        @(new HtmlString($"$('li[data-argument-index=\"{x.FieldIndex}\"]').css('color', 'red');"))
+    }
+</script>

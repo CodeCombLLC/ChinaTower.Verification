@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
+using Microsoft.Data.Entity;
 using Microsoft.Extensions.PlatformAbstractions;
 using CodeComb.Data.Excel;
+using CodeComb.Data.Verification;
 using ChinaTower.Verification.Models;
 using ChinaTower.Verification.Models.Infrastructures;
 
@@ -79,6 +81,45 @@ namespace ChinaTower.Verification.Controllers
                 });
             ViewBag.RelatedForms = DB.Forms
                 .Where(x => x.Type != FormType.站址 && x.StationKey == form.Id)
+                .ToList();
+            return View(form);
+        }
+        
+        public IActionResult FIelds(long id)
+        {
+            var form = DB.Forms.Single(x => x.Id == id);
+            ViewBag.Headers = Hash.Headers[form.Type];
+            ViewBag.Rules = DB.VerificationRules
+                .Include(x => x.Rule)
+                .Where(x => x.Type == form.Type)
+                .ToList();
+            return View(form);
+        }
+
+        public IActionResult Verify(FormType type, string[] fields)
+        {
+            var rules = DB.VerificationRules
+                .Where(x => x.Type == type)
+                .ToList();
+            var result = new VerifyResult { IsSuccess = true, Information = "", FailedRules = new List<Rule>() };
+            foreach(var x in rules)
+            {
+                var res = DataVerificationRuleManager.Verify(x.RuleId, fields);
+                if (!res.IsSuccess)
+                {
+                    result.IsSuccess = false;
+                    result.Information += res.Information;
+                    result.FailedRules.AddRange(res.FailedRules);
+                }
+            }
+            return Json(result.FailedRules.Select(x => x.ArgumentIndex));
+        }
+
+        public IActionResult Log(long id)
+        {
+            var form = DB.Forms.Single(x => x.Id == id);
+            ViewBag.Rules = DB.VerificationRules
+                .Where(x => x.Type == form.Type)
                 .ToList();
             return View(form);
         }

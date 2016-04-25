@@ -79,7 +79,7 @@
             <div id="sidebar" class="nav-collapse ">
                 <!-- sidebar menu start-->
                 <ul class="sidebar-menu" id="nav-accordion">
-                    <p class="centered"><a href="profile.html"><img src="assets/img/ui-sam.jpg" class="img-circle" width="60"></a></p>
+                    <p class="centered"><a href="profile.html"><img src="~/images/chinatower.png" class="img-circle" width="60"></a></p>
                     <h5 class="centered">@User.Current.UserName</h5>
 
                     <li class="sub-menu">
@@ -137,13 +137,6 @@
                             <span>用户管理</span>
                         </a>
                     </li>
-
-                    <li class="sub-menu">
-                        <a target="_blank" href="http://wpa.b.qq.com/cgi/wpa.php?ln=1&key=XzgwMDA5ODY0NF8zNzc1MDlfODAwMDk4NjQ0XzJf">
-                            <i class="fa fa-qq"></i>
-                            <span>联系售后服务</span>
-                        </a>
-                    </li>
                     }
 
                     <li class="sub-menu">
@@ -152,6 +145,16 @@
                             <span>修改密码</span>
                         </a>
                     </li>
+
+                    @if (User.AnyRoles("Root"))
+                    {
+                        <li class="sub-menu">
+                            <a target="_blank" href="http://wpa.b.qq.com/cgi/wpa.php?ln=1&key=XzgwMDA5ODY0NF8zNzc1MDlfODAwMDk4NjQ0XzJf">
+                                <i class="fa fa-qq"></i>
+                                <span>联系售后服务</span>
+                            </a>
+                        </li>
+                    }
 
                     <li class="sub-menu">
                         <a target="_blank" href="javascript:$('#frmLogout').submit()">

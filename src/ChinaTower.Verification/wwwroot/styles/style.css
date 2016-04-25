@@ -1929,7 +1929,7 @@ label {
 	-webkit-border-radius: 5px;
 }
 
-.form-login h2.form-login-heading {
+.form-login h2.form-login-heading, .prompt-heading {
 	margin: 0;
 	padding: 25px 20px;
 	text-align: center;
@@ -2361,4 +2361,16 @@ input::-webkit-input-placeholder {
 }
 input:-moz-placeholder {
     color: #ccc!important;
+}
+
+.prompt-outer {
+    background: #fff;
+    margin-top: 80px;
+    padding: 0;
+}
+
+.prompt-buttons {
+    padding: 10px;
+    background: #eee;
+    text-align: center;
 }

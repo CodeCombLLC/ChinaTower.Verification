@@ -120,6 +120,13 @@ namespace ChinaTower.Verification.Controllers
                 var allc = DB.Cities
                     .Select(x => x.Id)
                     .ToList();
+
+                var directory = System.IO.Path.Combine(env.ApplicationBasePath, "Upload");
+                if (!System.IO.Directory.Exists(directory))
+                    System.IO.Directory.CreateDirectory(directory);
+                var fname = System.IO.Path.Combine(directory, Guid.NewGuid() + ".xlsx");
+                file.SaveAs(fname);
+
                 Task.Factory.StartNew(async () =>
                 {
                     var count = 0;
@@ -128,11 +135,6 @@ namespace ChinaTower.Verification.Controllers
                     var ignored = 0;
                     using (var db = serviceScope.ServiceProvider.GetService<ChinaTowerContext>())
                     {
-                        var directory = System.IO.Path.Combine(env.ApplicationBasePath, "Upload");
-                        if (!System.IO.Directory.Exists(directory))
-                            System.IO.Directory.CreateDirectory(directory);
-                        var fname = System.IO.Path.Combine(directory, Guid.NewGuid() + ".xlsx");
-                        file.SaveAs(fname);
                         var rules = db.VerificationRules
                             .Include(x => x.Rule)
                             .Where(x => x.Type == type)

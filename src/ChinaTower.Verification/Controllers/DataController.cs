@@ -302,6 +302,7 @@ namespace ChinaTower.Verification.Controllers
         {
             using (var serviceScope = Resolver.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
+                var userEmail = User.Current.Email;
                 Task.Factory.StartNew(()=>
                 {
                     using (var db = serviceScope.ServiceProvider.GetService<ChinaTowerContext>())
@@ -397,7 +398,7 @@ namespace ChinaTower.Verification.Controllers
                             }
                         }
                         var email = serviceScope.ServiceProvider.GetService<IEmailSender>();
-                        email.SendEmailAsync(User.Current.Email, "数据校验完成", $"数据已经校验完成，总共校验 {total} 条数据，其中 {failed} 条没有通过校验。");
+                        email.SendEmailAsync(userEmail, "数据校验完成", $"数据已经校验完成，总共校验 {total} 条数据，其中 {failed} 条没有通过校验。");
                     }
                 });
             }

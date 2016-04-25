@@ -56,6 +56,7 @@ namespace ChinaTower.Verification.Controllers
                 var src = ret.ToList();
                 using (var serviceScope = Resolver.GetRequiredService<IServiceScopeFactory>().CreateScope())
                 {
+                    var userEmail = User.Current.Email;
                     Task.Factory.StartNew(async () =>
                     {
                         using (var excel = ExcelStream.Create(fname))
@@ -77,7 +78,7 @@ namespace ChinaTower.Verification.Controllers
                         System.IO.File.Delete(fname);
                         Exports.Add(new Export { TimeStamp = timestamp, Expire = DateTime.Now.AddDays(1), Blob = blob, UserId = User.Current.Id });
                         var email = serviceScope.ServiceProvider.GetService<IEmailSender>();
-                        await email.SendEmailAsync(User.Current.Email, $"站址数据已成功导出", $"<a href=\"{ Url.Link("default", new { controller = "Station", action = "Export", id = timestamp }) }\">点击此处下载 (stations.xlsx, { (blob.Length / 1024 / 1024).ToString("0.0") } MB)</a><br/><span>文件有效期至{ DateTime.Now.ToString("yyyy年MM月dd日 HH时mm分") }</span>");
+                        await email.SendEmailAsync(userEmail, $"站址数据已成功导出", $"<a href=\"{ Url.Link("default", new { controller = "Station", action = "Export", id = timestamp }) }\">点击此处下载 (stations.xlsx, { (blob.Length / 1024 / 1024).ToString("0.0") } MB)</a><br/><span>文件有效期至{ DateTime.Now.ToString("yyyy年MM月dd日 HH时mm分") }</span>");
                         GC.Collect();
                     });
                 }

@@ -4,12 +4,13 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
-using CodeComb.Algorithm.Geography;
+using Microsoft.AspNet.Authorization;
 using Newtonsoft.Json;
 using ChinaTower.Verification.Models;
 
 namespace ChinaTower.Verification.Controllers
 {
+    [Authorize]
     public class CityController : BaseController
     {
         [HttpGet]

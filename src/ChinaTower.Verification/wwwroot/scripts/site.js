@@ -141,4 +141,44 @@ $(document).ready(function () {
         $('#ruleJson').val(JSON.stringify(obj));
         $('#frmSaveRule').submit();
     });
+
+    $('#btnFormEditSubmit').click(function () {
+        $.getJSON('/Station/Verify', $('#frmFormEdit').serialize(), function (data) {
+            var fields = $('[name="fields"]');
+            for (var i = 0; i < data.length; i++) {
+                $(fields[data[i]]).addClass('has-error');
+            }
+            if (data.length > 0 && confirm('数据校验失败，是否继续提交？')) {
+                $('#frmFormEdit').submit();
+            }
+            if (data.length == 0)
+                $('#frmFormEdit').submit();
+        });
+    });
+
+    $(document).click(function (e) {
+        if ($(e.target).attr('name') == 'fields') {
+            $(e.target).removeClass('has-error');
+        }
+    });
 });
+
+function editForm(id, type)
+{
+    $('#formType').val(type);
+    $('#formId').val(id);
+    $('#divEditForm').html('');
+    $('#modalEditForm').modal('show');
+    $.get('/Station/Fields/' + id, { }, function (data) {
+        $('#divEditForm').html(data);
+    });
+}
+
+function showVerifyDetails(id)
+{
+    $('#divVerifyLog').html('');
+    $('#modalVerifyLog').modal('show');
+    $.get('/Station/Log/' + id, { }, function (data) {
+        $('#divVerifyLog').html(data);
+    });
+}

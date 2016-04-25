@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNet.Builder;
+﻿using System;
+using System.Threading;
+using System.Linq;
+using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.Data.Entity;
@@ -10,6 +13,8 @@ namespace ChinaTower.Verification
 {
     public class Startup
     {
+        private Timer ExportGC;
+
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddEntityFramework()
@@ -34,7 +39,7 @@ namespace ChinaTower.Verification
             services.AddMvc();
             services.AddSignalR();
             services.AddAesCrypto();
-            services.AddSmtpEmailSender("smtp.exmail.qq.com", 25, "Mano Cloud", "noreply@mano.cloud", "noreply@mano.cloud", "ManoCloud123456");
+            services.AddSmtpEmailSender("smtp.exmail.qq.com", 25, "码锋科技", "service@codecomb.com", "service@codecomb.com", "Yuuko19931101");
             services.AddSmartUser<User, string>();
             services.AddSmartCookies();
         }
@@ -52,6 +57,15 @@ namespace ChinaTower.Verification
             app.UseMvcWithDefaultRoute();
 
             await SampleData.InitDB(app.ApplicationServices);
+
+            ExportGC = new Timer((e) =>
+            {
+                var expired = Controllers.StationController.Exports.Where(x => DateTime.Now > x.Expire).ToList();
+                foreach (var x in expired)
+                    Controllers.StationController.Exports.Remove(x);
+                expired.Clear();
+                GC.Collect();
+            }, null, 0, 1000 * 60 * 20);
         }
 
         public static void Main(string[] args) => WebApplication.Run<Startup>(args);

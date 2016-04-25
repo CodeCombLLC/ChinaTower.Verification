@@ -18,7 +18,7 @@ namespace ChinaTower.Verification.Models
             await RoleManager.CreateAsync(new IdentityRole("Root"));
             await RoleManager.CreateAsync(new IdentityRole("Member"));
 
-            var user = new User { UserName = "root" };
+            var user = new User { UserName = "root", Email = "911574351@qq.com" };
             await UserManager.CreateAsync(user, "123456");
             await UserManager.AddToRoleAsync(user, "Root");
         }

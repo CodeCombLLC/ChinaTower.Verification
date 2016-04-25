@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using Microsoft.AspNet.Http;
+using Microsoft.AspNet.Authorization;
 using Microsoft.Data.Entity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
@@ -15,6 +16,7 @@ using ChinaTower.Verification.Models.Infrastructures;
 
 namespace ChinaTower.Verification.Controllers
 {
+    [Authorize]
     public class DataController : BaseController
     {
         public IActionResult Index()
@@ -47,6 +49,7 @@ namespace ChinaTower.Verification.Controllers
             };
             DB.VerificationRules.Add(vr);
             DB.SaveChanges();
+            DB.Database.ExecuteSqlCommand("UPDATE \"Forms\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", type);
             return RedirectToAction("EditRule", "Data", new { id = vr.Id });
         }
 
@@ -66,8 +69,12 @@ namespace ChinaTower.Verification.Controllers
             var rule = DB.VerificationRules
                             .Include(x => x.Rule)
                             .Single(x => x.Id == id);
+            var flag = false;
+            if (RuleJson != rule.Rule.RuleJson)
+                flag = true;
             rule.Rule.RuleJson = RuleJson;
             DB.SaveChanges();
+            DB.Database.ExecuteSqlCommand("UPDATE \"Forms\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", rule.Type);
             return Prompt(x =>
             {
                 x.Title = "编辑成功";
@@ -85,6 +92,7 @@ namespace ChinaTower.Verification.Controllers
                             .Single(x => x.Id == id);
             DB.VerificationRules.Remove(rule);
             DB.SaveChanges();
+            DB.Database.ExecuteSqlCommand("UPDATE \"Forms\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", rule.Type);
             return Content("ok");
         }
 
@@ -200,6 +208,7 @@ namespace ChinaTower.Verification.Controllers
                                                 var l = form.VerificationLogs;
                                                 l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][3], FieldIndex = 3, Reason = $"不存在城市{form.City}" });
                                                 form.VerificationJson = JsonConvert.SerializeObject(l);
+                                                form.Status = VerificationStatus.Wrong;
                                             }
                                             // 2. 判断区县是否合法
                                             else if (!city.Districts.Contains(form.District))
@@ -207,6 +216,7 @@ namespace ChinaTower.Verification.Controllers
                                                 var l = form.VerificationLogs;
                                                 l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][4], FieldIndex = 4, Reason = $"{city.Id}中不存在区县{form.District}" });
                                                 form.VerificationJson = JsonConvert.SerializeObject(l);
+                                                form.Status = VerificationStatus.Wrong;
                                             }
                                             // 3a. 判断经纬度是否合法
                                             else if (!gpsPosition)
@@ -215,6 +225,7 @@ namespace ChinaTower.Verification.Controllers
                                                 l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][Hash.Lon[type].Value], FieldIndex = Hash.Lon[type].Value, Reason = $"({form.Lon.Value}, {form.Lat.Value})不属于{form.City}" });
                                                 l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][Hash.Lat[type].Value], FieldIndex = Hash.Lat[type].Value, Reason = $"({form.Lon.Value}, {form.Lat.Value})不属于{form.City}" });
                                                 form.VerificationJson = JsonConvert.SerializeObject(l);
+                                                form.Status = VerificationStatus.Wrong;
                                             }
                                             // 3b. 判断经纬度是否合法
                                             else if (!city.Edge.IsInPolygon(new CodeComb.Algorithm.Geography.Point { X = form.Lon.Value, Y = form.Lat.Value, Type = CodeComb.Algorithm.Geography.PointType.WGS }))
@@ -223,6 +234,7 @@ namespace ChinaTower.Verification.Controllers
                                                 l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][Hash.Lon[type].Value], FieldIndex = Hash.Lon[type].Value, Reason = $"({form.Lon.Value}, {form.Lat.Value})不属于{form.City}" });
                                                 l.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][Hash.Lat[type].Value], FieldIndex = Hash.Lat[type].Value, Reason = $"({form.Lon.Value}, {form.Lat.Value})不属于{form.City}" });
                                                 form.VerificationJson = JsonConvert.SerializeObject(l);
+                                                form.Status = VerificationStatus.Wrong;
                                             }
                                         }
                                         var existedForm = db.Forms.SingleOrDefault(x => x.UniqueKey == form.UniqueKey && x.Type == type);

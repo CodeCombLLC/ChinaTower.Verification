@@ -2355,3 +2355,10 @@ hr {
     overflow-x: scroll;
     width: 100%;
 }
+
+input::-webkit-input-placeholder {
+    color: #ccc!important;
+}
+input:-moz-placeholder {
+    color: #ccc!important;
+}

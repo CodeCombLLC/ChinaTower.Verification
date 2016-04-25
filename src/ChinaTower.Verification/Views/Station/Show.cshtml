@@ -35,7 +35,7 @@
         }
     </table>
     <div>
-        <input type="button" class="btn btn-primary" value="编辑站址信息" onclick="editForm(@Model.Id)" />
+        <input type="button" class="btn btn-primary" value="编辑站址信息" onclick="editForm(@Model.Id, @((int)Model.Type))" />
         <input type="button" class="btn btn-danger" value="错误详情" onclick="showVerifyDetails(@Model.Id)" />
     </div>
 </div>
@@ -82,7 +82,7 @@
                                 {
                                     <a href="javascript:showVerifyDetails(@x.Id)">错误详情</a>
                                 }
-                                <a href="javascript:editForm(@x.Id)">编辑表单</a>
+                                <a href="javascript:editForm(@x.Id, @((int)x.Type)">编辑表单</a>
                             </td>
                         </tr>
                     }
@@ -91,4 +91,4 @@
         </div>
     </div>
 }
-
+@Html.Partial("_FormModals")

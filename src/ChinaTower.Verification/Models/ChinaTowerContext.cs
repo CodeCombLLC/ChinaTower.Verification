@@ -14,6 +14,8 @@ namespace ChinaTower.Verification.Models
 
         public DbSet<VerificationRule> VerificationRules { get; set; }
 
+        public DbSet<Log> Logs { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -35,6 +37,11 @@ namespace ChinaTower.Verification.Models
             builder.Entity<VerificationRule>(e =>
             {
                 e.HasIndex(x => x.Type);
+            });
+
+            builder.Entity<Log>(e =>
+            {
+                e.HasIndex(x => x.Time);
             });
         }
     }

@@ -1,0 +1,86 @@
+﻿@model IEnumerable<Form>
+@{
+    ViewBag.Title = "数据校验管理";
+}
+
+<div class="col-md-9">
+    <div class="showback">
+        <h4><i class="fa fa-angle-right"></i> 存在问题表单列表</h4>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>唯一标识</th>
+                    <th>表单类型</th>
+                    <th>状态</th>
+                    <th>校验时间</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var x in Model)
+                {
+
+                    <tr>
+                        <td>
+                            @if (x.Type == ChinaTower.Verification.Models.Infrastructures.FormType.站址)
+                            {
+                                <a asp-action="Show" asp-controller="Station" asp-route-sid="@x.UniqueKey">@x.UniqueKey</a>
+                            }
+                            else
+                            {
+                                <a asp-action="Show" asp-controller="Station" asp-route-sid="@x.StationKey">@x.UniqueKey</a>
+                            }
+                        </td>
+                        <td>@x.Type</td>
+                        <td>
+                            @if (x.Status == ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Pending)
+                            {
+                                <span class="label label-info">待校验</span>
+                            }
+                            else
+                            {
+                                <span class="label label-danger">未通过</span>
+                            }
+                        </td>
+                        <td>
+                            @if (x.Status == ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Pending)
+                            {
+                                <span>-</span>
+                            }
+                            else
+                            {
+                                <span>@x.VerificationTime</span>
+                            }
+                        </td>
+                        <td>
+                            @if (x.Status == ChinaTower.Verification.Models.Infrastructures.VerificationStatus.Wrong)
+                            {
+                                <a href="javascript:showVerifyDetails('@x.Id');">查看错误明细</a>
+                            }
+                            <a href="javascript:editForm('@x.Id', @((int)x.Type));">编辑表单</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <nav class="centered">
+            @Html.MakePager("", "active", "pagination")
+        </nav>
+    </div>
+</div>
+<div class="col-md-3">
+    <div class="showback">
+        <h4><i class="fa fa-angle-right"></i> 新建校验</h4>
+        <form asp-action="Verify" asp-controller="Data" method="post">
+            <div class="form-group">
+                <label>校验内容</label>
+                <select class="form-control" name="PendingOnly">
+                    <option value="true">仅校验待校验表单</option>
+                    <option value="false">全部校验</option>
+                </select>
+            </div>
+            <input type="submit" value="开始校验" class="btn btn-primary" />
+        </form>
+    </div>
+</div>
+@Html.Partial("_FormModals")

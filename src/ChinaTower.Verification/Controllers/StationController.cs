@@ -4,10 +4,12 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
 using Microsoft.Data.Entity;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
 using Microsoft.AspNet.Authorization;
 using CodeComb.Data.Excel;
 using CodeComb.Data.Verification;
+using CodeComb.Net.EmailSender;
 using Newtonsoft.Json;
 using ChinaTower.Verification.Models;
 using ChinaTower.Verification.Models.Infrastructures;
@@ -19,7 +21,7 @@ namespace ChinaTower.Verification.Controllers
     {
         public static List<Export> Exports = new List<Export>();
 
-        public async Task<IActionResult> Index(string StationId, string StationName,string City, string District, bool ErrorOnly, [FromServices] IApplicationEnvironment env, [FromServices] CodeComb.Net.EmailSender.IEmailSender email, bool raw = false)
+        public async Task<IActionResult> Index(string StationId, string StationName,string City, string District, bool ErrorOnly, [FromServices] IApplicationEnvironment env, bool raw = false)
         {
             ViewBag.Cities = DB.Cities.ToList();
             var ret = DB.Forms
@@ -52,29 +54,33 @@ namespace ChinaTower.Verification.Controllers
                     System.IO.Directory.CreateDirectory(directory);
                 var fname = System.IO.Path.Combine(directory, Guid.NewGuid() + ".xlsx");
                 var src = ret.ToList();
-                Task.Factory.StartNew(async ()=> 
+                using (var serviceScope = Resolver.GetRequiredService<IServiceScopeFactory>().CreateScope())
                 {
-                    using (var excel = ExcelStream.Create(fname))
-                    using (var sheet = excel.LoadSheet(1))
+                    Task.Factory.StartNew(async () =>
                     {
-                        var header = new CodeComb.Data.Excel.Infrastructure.Row();
-                        foreach (var x in Hash.Headers[FormType.站址])
-                            header.Add(x);
-                        sheet.Add(header);
-                        foreach (var x in src)
+                        using (var excel = ExcelStream.Create(fname))
+                        using (var sheet = excel.LoadSheet(1))
                         {
-                            var row = new CodeComb.Data.Excel.Infrastructure.Row();
-                            row.AddRange(x.FormStringArray);
-                            sheet.Add(row);
+                            var header = new CodeComb.Data.Excel.Infrastructure.Row();
+                            foreach (var x in Hash.Headers[FormType.站址])
+                                header.Add(x);
+                            sheet.Add(header);
+                            foreach (var x in src)
+                            {
+                                var row = new CodeComb.Data.Excel.Infrastructure.Row();
+                                row.AddRange(x.FormStringArray);
+                                sheet.Add(row);
+                            }
+                            sheet.SaveChanges();
                         }
-                        sheet.SaveChanges();
-                    }
-                    var blob = System.IO.File.ReadAllBytes(fname);
-                    System.IO.File.Delete(fname);
-                    Exports.Add(new Export { TimeStamp = timestamp, Expire = DateTime.Now.AddDays(1), Blob = blob, UserId = User.Current.Id });
-                    await email.SendEmailAsync(User.Current.Email, $"站址数据已成功导出", $"<a href=\"{ Url.Link("default", new { controller = "Station", action = "Export", id = timestamp }) }\">点击此处下载 (stations.xlsx, { (blob.Length / 1024 / 1024).ToString("0.0") } MB)</a><br/><span>文件有效期至{ DateTime.Now.ToString("yyyy年MM月dd日 HH时mm分") }</span>");
-                    GC.Collect();
-                });
+                        var blob = System.IO.File.ReadAllBytes(fname);
+                        System.IO.File.Delete(fname);
+                        Exports.Add(new Export { TimeStamp = timestamp, Expire = DateTime.Now.AddDays(1), Blob = blob, UserId = User.Current.Id });
+                        var email = serviceScope.ServiceProvider.GetService<IEmailSender>();
+                        await email.SendEmailAsync(User.Current.Email, $"站址数据已成功导出", $"<a href=\"{ Url.Link("default", new { controller = "Station", action = "Export", id = timestamp }) }\">点击此处下载 (stations.xlsx, { (blob.Length / 1024 / 1024).ToString("0.0") } MB)</a><br/><span>文件有效期至{ DateTime.Now.ToString("yyyy年MM月dd日 HH时mm分") }</span>");
+                        GC.Collect();
+                    });
+                }
                 return Prompt(x =>
                 {
                     x.Title = "正在导出";
@@ -84,20 +90,31 @@ namespace ChinaTower.Verification.Controllers
             return PagedView(ret);
         }
 
-        public IActionResult Show(long id)
+        public IActionResult Show(long? id, long? sid)
         {
-            var form = DB.Forms.Single(x => x.Id == id);
-            if (form.Type != FormType.站址)
-                return Prompt(x =>
-                {
-                    x.Title = "非法操作";
-                    x.Details = "您的请求不正确，请返回重试！";
-                    x.StatusCode = 401;
-                });
-            ViewBag.RelatedForms = DB.Forms
-                .Where(x => x.Type != FormType.站址 && x.StationKey.ToString() == form.UniqueKey)
-                .ToList();
-            return View(form);
+            if (id.HasValue)
+            {
+                var form = DB.Forms.Single(x => x.Id == id.Value);
+                if (form.Type != FormType.站址)
+                    return Prompt(x =>
+                    {
+                        x.Title = "非法操作";
+                        x.Details = "您的请求不正确，请返回重试！";
+                        x.StatusCode = 401;
+                    });
+                ViewBag.RelatedForms = DB.Forms
+                    .Where(x => x.Type != FormType.站址 && x.StationKey.ToString() == form.UniqueKey)
+                    .ToList();
+                return View(form);
+            }
+            else
+            {
+                var formId = DB.Forms
+                    .Where(x => x.UniqueKey == sid.Value.ToString() && x.Type == FormType.站址)
+                    .Select(x => x.Id)
+                    .Single();
+                return RedirectToAction("Show", "Station", new { id = formId });
+            }
         }
         
         public IActionResult FIelds(long id)
@@ -141,7 +158,7 @@ namespace ChinaTower.Verification.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(long id, string[] fields)
+        public IActionResult Edit(long id, string[] fields, [FromHeader] string Referer)
         {
             // 准备工作
             var gpsPosition = true;
@@ -247,8 +264,8 @@ namespace ChinaTower.Verification.Controllers
                 x.Title = "修改成功";
                 x.Details = "表单信息已经成功保存！";
                 x.HideBack = true;
-                x.RedirectText = "返回表单";
-                x.RedirectUrl = Url.Action("Show", "Station", new { id = id });
+                x.RedirectText = "返回上一页";
+                x.RedirectUrl = Referer;
             });
         }
 

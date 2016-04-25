@@ -13,12 +13,13 @@ namespace ChinaTower.Verification
 {
     public class Startup
     {
+        public static readonly string ConnectionString = "User ID=postgres;Password=123456;Host=localhost;Port=5432;Database=ctv;";
         private Timer ExportGC;
 
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddEntityFramework()
-                .AddDbContext<ChinaTowerContext>(x => x.UseNpgsql("User ID=postgres;Password=123456;Host=localhost;Port=5432;Database=ctv;"))
+                .AddDbContext<ChinaTowerContext>(x => x.UseNpgsql(ConnectionString))
                 .AddNpgsql();
 
             services.AddIdentity<User, IdentityRole>(x =>

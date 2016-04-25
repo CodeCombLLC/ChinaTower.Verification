@@ -9,8 +9,11 @@ using Microsoft.Data.Entity;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
 using CodeComb.Data.Excel;
+using CodeComb.Data.Verification;
 using CodeComb.Data.Verification.EntityFramework;
+using CodeComb.Net.EmailSender;
 using Newtonsoft.Json;
+using Npgsql;
 using ChinaTower.Verification.Models;
 using ChinaTower.Verification.Models.Infrastructures;
 
@@ -282,6 +285,126 @@ namespace ChinaTower.Verification.Controllers
             {
                 x.Title = "正在导入";
                 x.Details = "服务器正在导入您的数据并进行相关校验，请您稍后查看即可！";
+            });
+        }
+
+        [HttpGet]
+        public IActionResult Verify()
+        {
+            var ret = DB.Forms
+                .Where(x => x.Status != VerificationStatus.Accepted);
+            return PagedView(ret);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Verify(bool PendingOnly)
+        {
+            using (var serviceScope = Resolver.GetRequiredService<IServiceScopeFactory>().CreateScope())
+            {
+                Task.Factory.StartNew(()=>
+                {
+                    using (var db = serviceScope.ServiceProvider.GetService<ChinaTowerContext>())
+                    {
+                        var total = 0;
+                        var failed = 0;
+                        if (!PendingOnly)
+                            db.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\" = {0} WHERE \"Status\" <> {0}", 2);
+                        var Cities = db.Cities.ToList();
+                        var Rules = db.VerificationRules.ToList();
+                        using (var conn = new NpgsqlConnection(Startup.ConnectionString))
+                        {
+                            conn.Open();
+                            var count = 0L;
+                            using (var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM \"Form\"", conn))
+                            {
+                                count = (long)cmd.ExecuteScalar();
+                            }
+                            for(var i = 0; i * 1000 < count; i ++)
+                            {
+                                using (var cmd = new NpgsqlCommand("SELECT \"Id\",\"FormJson\", \"Type\" FROM \"Form\" LIMIT 1000", conn))
+                                using (var reader = cmd.ExecuteReader())
+                                {
+                                    while (reader.Read())
+                                    {
+                                        total++;
+                                        var type = (FormType)reader["Type"];
+                                        var result = new VerifyResult { IsSuccess = true, Information = "", FailedRules = new List<Rule>() };
+                                        var json = reader["FormJson"].ToString();
+                                        var fields = JsonConvert.DeserializeObject<string[]>(json);
+                                        var status = VerificationStatus.Accepted;
+                                        var rules = Rules
+                                            .Where(x => x.Type == type)
+                                            .ToList();
+                                        foreach (var x in rules)
+                                        {
+                                            var res = DataVerificationRuleManager.Verify(x.RuleId, fields);
+                                            if (!res.IsSuccess)
+                                            {
+                                                result.IsSuccess = false;
+                                                result.Information += res.Information;
+                                                result.FailedRules.AddRange(res.FailedRules);
+                                            }
+                                        }
+                                        var logs = new List<VerificationLog>();
+                                        foreach (var x in result.FailedRules)
+                                        {
+                                            logs.Add(new VerificationLog { Field = Hash.Headers[type][x.ArgumentIndex], FieldIndex = x.ArgumentIndex, Reason = $"{ Hash.Headers[type][x.ArgumentIndex] }字段没有通过校验" });
+                                        }
+                                        if (type == FormType.站址)
+                                        {
+                                            var city = Cities.SingleOrDefault(x => x.Id == fields[3]);
+                                            // 1. 判断城市是否合法
+                                            if (city == null)
+                                            {
+                                                logs.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][3], FieldIndex = 3, Reason = $"不存在城市{fields[3]}" });
+                                                status = VerificationStatus.Wrong;
+                                            }
+                                            // 2. 判断区县是否合法
+                                            else if (!city.Districts.Contains(fields[4]))
+                                            {
+                                                logs.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][4], FieldIndex = 4, Reason = $"{city.Id}中不存在区县{fields[4]}" });
+                                                status = VerificationStatus.Wrong;
+                                            }
+                                            // 3. 判断经纬度是否合法
+                                            else if (!city.Edge.IsInPolygon(new CodeComb.Algorithm.Geography.Point { X = Convert.ToDouble(fields[Hash.Lon[FormType.站址].Value]), Y = Convert.ToDouble(fields[Hash.Lat[FormType.站址].Value]), Type = CodeComb.Algorithm.Geography.PointType.WGS }))
+                                            {
+                                                logs.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][Hash.Lon[type].Value], FieldIndex = Hash.Lon[type].Value, Reason = $"({Convert.ToDouble(fields[Hash.Lon[FormType.站址].Value])}, {Convert.ToDouble(fields[Hash.Lat[FormType.站址].Value])})不属于{fields[3]}" });
+                                                logs.Add(new VerificationLog { Time = DateTime.Now, Field = Hash.Headers[type][Hash.Lat[type].Value], FieldIndex = Hash.Lat[type].Value, Reason = $"({Convert.ToDouble(fields[Hash.Lon[FormType.站址].Value])}, {Convert.ToDouble(fields[Hash.Lat[FormType.站址].Value])})不属于{fields[3]}" });
+                                                status = VerificationStatus.Wrong;
+                                            }
+                                        }
+
+                                        // 计数
+                                        if (status == VerificationStatus.Wrong)
+                                            failed++;
+
+                                        // 写入数据库
+                                        using (var conn2 = new NpgsqlConnection(Startup.ConnectionString))
+                                        {
+                                            conn2.Open();
+                                            using (var cmd2 = new NpgsqlCommand("UPDATE \"Form\" SET \"VerificationTime\" = @p0, \"Status\" = @p1, \"VerificationJson\" = @p2 WHERE \"Id\" = @p3;", conn2))
+                                            {
+                                                cmd2.Parameters.Add(new NpgsqlParameter { ParameterName = "@p0", Value = DateTime.Now });
+                                                cmd2.Parameters.Add(new NpgsqlParameter { ParameterName = "@p1", Value = (int)status });
+                                                cmd2.Parameters.Add(new NpgsqlParameter { ParameterName = "@p2", Value = JsonConvert.SerializeObject(logs) });
+                                                cmd2.Parameters.Add(new NpgsqlParameter { ParameterName = "@p3", Value = Convert.ToInt64(reader["Id"]) });
+                                                cmd2.ExecuteNonQuery();
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        var email = serviceScope.ServiceProvider.GetService<IEmailSender>();
+                        email.SendEmailAsync(User.Current.Email, "数据校验完成", $"数据已经校验完成，总共校验 {total} 条数据，其中 {failed} 条没有通过校验。");
+                    }
+                });
+            }
+            return Prompt(x =>
+            {
+                x.Title = "正在校验";
+                x.Details = "系统正在校验数据，在完成校验后系统将给您发送一封电子邮件通知您，请您耐心等待！";
             });
         }
     }

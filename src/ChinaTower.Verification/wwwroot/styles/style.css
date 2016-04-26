@@ -2374,3 +2374,7 @@ input:-moz-placeholder {
     background: #eee;
     text-align: center;
 }
+
+#btnShowMenu{
+    display: none;
+}

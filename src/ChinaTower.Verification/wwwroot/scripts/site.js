@@ -66,6 +66,10 @@ function removeRule(p)
 }
 
 $(document).ready(function () {
+    $('#btnShowMenu').click(function () {
+        $('#nav-accordion').slideToggle();
+    });
+
     $('#lstRuleTypes').change(function () {
         switch ($('#lstRuleTypes').val()) {
             case 'And':

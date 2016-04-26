@@ -17,8 +17,8 @@
                 <td>@x.FileName</td>
                 <td>@x.Time</td>
                 <td>
-                    <a target="_blank" asp-action="Download" asp-controller="Home" asp-route-id="@x.Id">查看照片</a>
-                    <a asp-action="javascript:removePicture('@x.Id');">删除照片</a>
+                    <a target="_blank" asp-action="Image" asp-controller="Home" asp-route-id="@x.Id">查看照片</a>
+                    <a href="javascript:removePicture('@x.Id');">删除照片</a>
                 </td>
             </tr>
         }

@@ -40,7 +40,7 @@
             <input type="button" class="btn btn-danger" value="错误详情" onclick="showVerifyDetails(@Model.Id)" />
             @if (!string.IsNullOrWhiteSpace(Model.PanoUrl))
             {
-                <input type="button" class="btn btn-info" value="720度全景" onclick="showPano(@Model.PanoUrl)" />
+                <input type="button" class="btn btn-info" value="720度全景" onclick="showPano('@Model.PanoUrl')" />
             }
             @if (Model.Type == ChinaTower.Verification.Models.Infrastructures.FormType.站址)
             {
@@ -103,7 +103,7 @@
 </div>
 <div class="col-md-2">
     <div class="showback">
-        <h4 class="modal-title" id="myModalLabel">图片</h4>
+        <h4 class="modal-title" id="myModalLabel">照片</h4>
         <table class="table table-bordered">
             @foreach(var x in Enum.GetNames(typeof(ChinaTower.Verification.Models.Infrastructures.ImageType)))
             {
@@ -113,15 +113,13 @@
                     </td>
                 </tr>
             }
-            <tr>
-                <td><a href="javascript:$('#modalUploadImage').modal('show')">上传图片</a></td>
-            </tr>
         </table>
+        <a class="btn btn-success" href="javascript:$('#modalUploadImage').modal('show')">上传图片</a>
     </div>
 </div>
 
 <div class="modal fade" id="modalPano" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -143,7 +141,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="myModalLabel">照片列表</h4>
             </div>
-            <div class="modal-body" id="divImagesList">
+            <div class="modal-body" id="divImageList">
                 
             </div>
             <div class="modal-footer">
@@ -201,6 +199,9 @@
         </form>
     </div>
 </div>
+<form id="frmDeletePicture" asp-action="RemoveFile" asp-controller="Home">
+    <input type="hidden" name="id" id="pictureId" />
+</form>
 
 @Html.Partial("_FormModals")
 <script>
@@ -220,5 +221,14 @@
         $.get('@Url.Action("Picture", "Station", new { id = Model.Id })', { type: type }, function (data) { 
             $('#divImageList').html(data);
         });
+    }
+
+    function removePicture(id)
+    {
+        if (confirm("您确认要删除这张照片吗？"))
+        {
+            $('#pictureId').val(id);
+            $('#frmDeletePicture').submit();
+        }
     }
 </script>

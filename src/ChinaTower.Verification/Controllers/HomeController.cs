@@ -37,6 +37,12 @@ namespace ChinaTower.Verification.Controllers
             return File(blob.Content, blob.ContentType, blob.FileName);
         }
 
+        public IActionResult Image(Guid id)
+        {
+            ViewBag.Id = id;
+            return View();
+        }
+
         [HttpPost]
         public IActionResult RemoveFile(Guid id)
         {

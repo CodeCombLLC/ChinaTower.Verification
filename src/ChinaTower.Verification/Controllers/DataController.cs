@@ -134,8 +134,10 @@ namespace ChinaTower.Verification.Controllers
                     var addition = 0;
                     var updated = 0;
                     var ignored = 0;
+
                     using (var db = serviceScope.ServiceProvider.GetService<ChinaTowerContext>())
                     {
+                        var dvrm = serviceScope.ServiceProvider.GetRequiredService<DataVerificationRuleManager>();
                         var rules = db.VerificationRules
                             .Include(x => x.Rule)
                             .Where(x => x.Type == type)
@@ -166,7 +168,7 @@ namespace ChinaTower.Verification.Controllers
                                         var verifyResult = new CodeComb.Data.Verification.VerifyResult { IsSuccess = true };
                                         foreach (var r in rules)
                                         {
-                                            var res = DataVerificationRuleManager.Verify(r.RuleId, fields.ToArray());
+                                            var res = dvrm.Verify(r.RuleId, fields.ToArray());
                                             if (!res.IsSuccess)
                                             {
                                                 verifyResult.IsSuccess = false;
@@ -352,6 +354,7 @@ namespace ChinaTower.Verification.Controllers
                 {
                     using (var db = serviceScope.ServiceProvider.GetService<ChinaTowerContext>())
                     {
+                        var dvrm = serviceScope.ServiceProvider.GetRequiredService<DataVerificationRuleManager>();
                         var total = 0;
                         var failed = 0;
                         if (!PendingOnly)
@@ -371,13 +374,13 @@ namespace ChinaTower.Verification.Controllers
                         {
                             conn.Open();
                             var count = 0L;
-                            using (var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM \"Form\"", conn))
+                            using (var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM \"Form\" WHERE \"Status\" = 2", conn))
                             {
                                 count = (long)cmd.ExecuteScalar();
                             }
-                            for(var i = 0; i * 1000 < count; i ++)
+                            for(var i = 0; i * 100 < count; i ++)
                             {
-                                using (var cmd = new NpgsqlCommand("SELECT \"Id\",\"FormJson\", \"Type\" FROM \"Form\" LIMIT 1000", conn))
+                                using (var cmd = new NpgsqlCommand("SELECT \"Id\",\"FormJson\", \"Type\" FROM \"Form\" WHERE \"Status\" = 2 LIMIT 100", conn))
                                 using (var reader = cmd.ExecuteReader())
                                 {
                                     while (reader.Read())
@@ -393,7 +396,7 @@ namespace ChinaTower.Verification.Controllers
                                             .ToList();
                                         foreach (var x in rules)
                                         {
-                                            var res = DataVerificationRuleManager.Verify(x.RuleId, fields);
+                                            var res = dvrm.Verify(x.RuleId, fields);
                                             if (!res.IsSuccess)
                                             {
                                                 result.IsSuccess = false;
@@ -449,6 +452,7 @@ namespace ChinaTower.Verification.Controllers
                                         }
                                     }
                                 }
+                                GC.Collect();
                             }
                         }
                         var email = serviceScope.ServiceProvider.GetService<IEmailSender>();
@@ -525,7 +529,7 @@ namespace ChinaTower.Verification.Controllers
                             .ToDictionary(x => x.UniqueKey, x => x.Name);
                         foreach (var x in g.Where(x => x.Key.HasValue))
                         {
-                            sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { $"【{dic[x.Key.Value.ToString()]}】 站址编码：{x.Key.Value} 错误个数：{x.Count}"});
+                            sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { $"【{dic[x.Key.Value.ToString()]}】 站址编码：{x.Key.Value} 错误表单：{x.Count}"});
                             foreach (var y in x.Details)
                             {
                                 var log = JsonConvert.DeserializeObject<ICollection<VerificationLog>>(y.Logs);

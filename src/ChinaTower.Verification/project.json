@@ -16,7 +16,7 @@
     "CodeComb.AspNet.Extensions": "2.0.0-rc1-final-3",
     "CodeComb.Algorithm.Geography": "1.0.0",
     "CodeComb.Net.EmailSender": "2.0.0-rc1-final",
-    "CodeComb.Data.Excel": "2.0.0-rc1-final-5",
+    "CodeComb.Data.Excel": "2.0.0-rc1-final-6",
     "CodeComb.Data.Verification": "2.0.0-rc1-final",
     "CodeComb.Security.Aes": "2.0.0-rc1-final",
     "EntityFramework7.Npgsql": "3.1.0-rc1-3"

@@ -139,10 +139,12 @@ namespace ChinaTower.Verification.Controllers
             {
                 gpsPosition = false;
             }
+            if (Hash.City[type].HasValue)
+                form.City = fields[Hash.City[type].Value];
+            if (Hash.District[type].HasValue)
+                form.District = fields[Hash.District[type].Value];
             if (type == FormType.站址)
             {
-                form.City = fields[3];
-                form.District = fields[4];
                 form.Name = fields[0];
             }
             else

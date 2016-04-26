@@ -215,16 +215,20 @@ namespace ChinaTower.Verification.Controllers
                                                 gpsPosition = false;
                                             }
                                         }
+                                        // 处理市、区信息
+                                        if (Hash.City[type].HasValue)
+                                            form.City = fields[Hash.City[type].Value];
+                                        if (Hash.District[type].HasValue)
+                                            form.District = fields[Hash.District[type].Value];
+                                        if (!IsRoot && !cities.Contains(form.City) && allc.Contains(form.City))
+                                        {
+                                            ignored++;
+                                            continue;
+                                        }
+
                                         // 如果是站址需要额外判断
                                         if (type == FormType.站址)
                                         {
-                                            form.City = fields[3];
-                                            if (!IsRoot && !cities.Contains(form.City) && allc.Contains(form.City))
-                                            {
-                                                ignored++;
-                                                continue;
-                                            }
-                                            form.District = fields[4];
                                             form.Name = fields[0];
                                             var city = db.Cities.SingleOrDefault(x => x.Id == form.City);
                                             // 1. 判断城市是否合法
@@ -484,7 +488,7 @@ namespace ChinaTower.Verification.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Export([FromServices] IApplicationEnvironment env)
+        public IActionResult Export([FromServices] IApplicationEnvironment env)
         {
             var uid = User.Current.Id;
             var email = User.Current.Email;

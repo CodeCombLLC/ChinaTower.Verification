@@ -111,6 +111,58 @@ namespace ChinaTower.Verification.Models.Infrastructures
             { FormType.功分器, 3 }
         };
 
+        public static Dictionary<FormType, int?> City = new Dictionary<FormType, int?>
+        {
+            { FormType.衰减器, null },
+            { FormType.直流配电设备, 5 },
+            { FormType.合路器, null },
+            { FormType.负载, null },
+            { FormType.交流配电, 6 },
+            { FormType.高压配电, 6 },
+            { FormType.室内天线, null },
+            { FormType.低压配电, 5 },
+            { FormType.机房, 3 },
+            { FormType.机房空调设备, 7 },
+            { FormType.其他设备, 6 },
+            { FormType.室外天线, 5 },
+            { FormType.外市电引入, 6 },
+            { FormType.POI, null },
+            { FormType.动力及环境单元, 8 },
+            { FormType.铁塔, 3 },
+            { FormType.铁塔平面, null },
+            { FormType.整流器设备, 7 },
+            { FormType.站址, 3 },
+            { FormType.UPS, 4 },
+            { FormType.变压稳压, 7 },
+            { FormType.功分器, null }
+        };
+
+        public static Dictionary<FormType, int?> District = new Dictionary<FormType, int?>
+        {
+            { FormType.衰减器, 29 },
+            { FormType.直流配电设备, 6 },
+            { FormType.合路器, 7 },
+            { FormType.负载, 29 },
+            { FormType.交流配电, 7 },
+            { FormType.高压配电, 7 },
+            { FormType.室内天线, 22 },
+            { FormType.低压配电, 6 },
+            { FormType.机房, 4 },
+            { FormType.机房空调设备, 8 },
+            { FormType.其他设备, 7 },
+            { FormType.室外天线, 6 },
+            { FormType.外市电引入, 7 },
+            { FormType.POI, null },
+            { FormType.动力及环境单元, 9 },
+            { FormType.铁塔, 5 },
+            { FormType.铁塔平面, 12 },
+            { FormType.整流器设备, 8 },
+            { FormType.站址, 4 },
+            { FormType.UPS, 5 },
+            { FormType.变压稳压, 8 },
+            { FormType.功分器, 8 }
+        };
+
         public static Dictionary<FormType, string[]> Headers = new Dictionary<FormType, string[]>
         {
             { FormType.衰减器, new string[] { "器材编号", "器材名称", "所属站点", "站点编码", "设备型号", "设备序列号", "所属室分", "设备类型", "别名", "上联设备类型", "器材名称", "上联馈线长度(M)", "上联馈线型号", "分配损耗（db）", "插入(耦合)损耗(db)", "隔离度(db)", "输入驻波比", "功率容量(W)", "频率范围", "带内平坦度(db)", "方向性(db)", "输入阻抗（Ω）", "耦合度(db)", "接头形式", "工作温度", "投产日期", "保修期", "软件版本", "备注", "所属区域", "创建人", "修改人", "创建时间", "修改时间" } },

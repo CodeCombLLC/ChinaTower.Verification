@@ -77,7 +77,8 @@ namespace ChinaTower.Verification.Controllers
                 flag = true;
             rule.Rule.RuleJson = RuleJson;
             DB.SaveChanges();
-            DB.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", rule.Type);
+            if (flag)
+                DB.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Status\"={0}, \"VerificationJson\" = {1} WHERE \"Type\" = {2}", VerificationStatus.Pending, "[]", rule.Type);
             return Prompt(x =>
             {
                 x.Title = "编辑成功";
@@ -479,6 +480,121 @@ namespace ChinaTower.Verification.Controllers
                 x.Title = "清空成功";
                 x.Details = "您所选择的表单已经全部清空";
             });
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Export([FromServices] IApplicationEnvironment env)
+        {
+            var uid = User.Current.Id;
+            var email = User.Current.Email;
+            var directory = System.IO.Path.Combine(env.ApplicationBasePath, "Export");
+            if (!System.IO.Directory.Exists(directory))
+                System.IO.Directory.CreateDirectory(directory);
+            var fname = System.IO.Path.Combine(directory, Guid.NewGuid() + ".xlsx");
+            using (var excel = ExcelStream.Create(fname))
+            using (var conn = DB.Database.GetDbConnection())
+            {
+                conn.Open();
+                var iterator = 0;
+                var cnt = 0;
+
+                // 生成表头
+                var sheet1 = excel.LoadSheet(1);
+                sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { "站址编码", "唯一标识", "表单类型", "错误信息", "校验时间" });
+
+                // 每次读取1000个，防止连接超时
+                do
+                {
+                    string sql1;
+                    if (User.IsInRole("Root"))
+                        sql1 = "SELECT \"VerificationTime\", \"VerificationJson\", \"UniqueKey\", \"StationKey\", \"Name\", \"Type\" FROM \"Form\" WHERE \"Status\" = @p0 LIMIT @take OFFSET @skip";
+                    else
+                        sql1 = "SELECT \"VerificationTime\", \"VerificationJson\", \"UniqueKey\", \"StationKey\", \"Name\", \"Type\" FROM \"Form\" WHERE \"Status\" = @p0 AND (\"City\" IN (SELECT \"ClaimValue\" FROM \"AspNetUserClaims\" WHERE \"UserId\" = @p1 AND \"ClaimType\" = @p2) OR \"City\" NOT IN (SELECT \"ClaimValue\" FROM \"AspNetUserClaims\" WHERE \"UserId\" = @p1 AND \"ClaimType\" = @p2) AND \"City\" NOT IN (SELECT \"Id\" FROM \"City\")) LIMIT @take OFFSET @skip";
+                    using (var cmd1 = new NpgsqlCommand(sql1, (NpgsqlConnection)conn))
+                    {
+                        // 添加标量
+                        cmd1.Parameters.Add(new NpgsqlParameter("@take", 1000));
+                        cmd1.Parameters.Add(new NpgsqlParameter("@skip", iterator * 1000));
+                        cmd1.Parameters.Add(new NpgsqlParameter("@p0", (object)(int)VerificationStatus.Wrong));
+                        if (!User.IsInRole("Root"))
+                        {
+                            // 非管理员需要添加额外的标量
+                            cmd1.Parameters.Add(new NpgsqlParameter("@p1", uid));
+                            cmd1.Parameters.Add(new NpgsqlParameter("@p2", "管辖市区"));
+                        }
+                        cnt = 0;                        
+                        // 获取DataReader
+                        using (var reader = cmd1.ExecuteReader())
+                        {
+                            // 遍历每条数据
+                            while(reader.Read())
+                            {
+                                cnt++;
+                                var type = (FormType)reader["Type"];
+                                var stationKey = reader["StationKey"].ToString();
+                                var uniqueKey = reader["UniqueKey"].ToString();
+                                var logs = JsonConvert.DeserializeObject<List<VerificationLog>>(reader["VerificationJson"].ToString());
+                                var time = Convert.ToDateTime(reader["VerificationTime"]);
+                                var row = new CodeComb.Data.Excel.Infrastructure.Row();
+                                if (type == FormType.站址)
+                                    stationKey = uniqueKey;
+                                row.Add(stationKey);
+                                row.Add(uniqueKey);
+                                row.Add(type.ToString());
+                                row.Add(string.Join("\r\n", logs.Select(x => x.Reason)));
+                                row.Add(time.ToString("yyyy-MM-dd HH:mm"));
+                                sheet1.Add(row);
+                                row = null;
+                            }
+                        }
+                    }
+
+                    // 回收内存
+                    GC.Collect();
+                    // 迭代变量自增
+                    iterator++;
+                }
+                while (cnt == 1000);
+                // 保存sheet1
+                sheet1.SaveChanges();
+                sheet1.Dispose();
+
+                // 创建sheet2
+                var sheet2 = excel.CreateSheet("Sheet2");
+                sheet2.Add(new CodeComb.Data.Excel.Infrastructure.Row { "站址名称", "站址编码", "错误个数", "校验时间" });
+                string sql2;
+                if (User.IsInRole("Root"))
+                    sql2 = "SELECT * FROM \"ErrorStations\" LIMIT @take OFFSET @skip;";
+                else
+                    sql2 = "SELECT * FROM \"ErrorStations\" WHERE \"City\" IN (SELECT \"ClaimValue\" FROM \"AspNetUserClaims\" WHERE \"UserId\" = @p0) OR (\"City\" NOT IN (SELECT \"ClaimValue\" FROM \"AspNetUserClaims\" WHERE \"UserId\" = @p0) AND \"City\" NOT IN (SELECT \"Id\" FROM \"City\")) LIMIT @take OFFSET @skip;";
+                iterator = 0;
+                cnt = 0;
+                do
+                {
+                    using (var cmd2 = new NpgsqlCommand(sql2, (NpgsqlConnection)conn))
+                    {
+                        cmd2.Parameters.Add(new NpgsqlParameter("@take", 1000));
+                        cmd2.Parameters.Add(new NpgsqlParameter("@skip", iterator * 1000));
+                        if (!User.IsInRole("Root"))
+                            cmd2.Parameters.Add(new NpgsqlParameter("@p0", uid));
+                        using (var reader = cmd2.ExecuteReader())
+                        {
+                            cnt = 0;
+                            while(reader.Read())
+                            {
+                                cnt++;
+                                sheet2.Add(new CodeComb.Data.Excel.Infrastructure.Row { reader["Name"].ToString(), reader["Number"].ToString(), reader["Count"].ToString(), Convert.ToDateTime(reader["Time"]).ToString("yyyy-MM-dd HH:mm") });
+                            }
+                        }
+                    }
+                }
+                while (cnt == 1000);
+                sheet2.SaveChanges();
+                sheet2.Dispose();
+            }
+            var blob = System.IO.File.ReadAllBytes(fname);
+            return File(blob, "application/vnd.ms-excel", "stations.xlsx");
         }
     }
 }

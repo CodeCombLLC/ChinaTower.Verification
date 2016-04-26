@@ -16,6 +16,8 @@ namespace ChinaTower.Verification.Models
 
         public DbSet<Log> Logs { get; set; }
 
+        public DbSet<Blob> Blobs { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
@@ -40,6 +42,11 @@ namespace ChinaTower.Verification.Models
             });
 
             builder.Entity<Log>(e =>
+            {
+                e.HasIndex(x => x.Time);
+            });
+
+            builder.Entity<Blob>(e =>
             {
                 e.HasIndex(x => x.Time);
             });

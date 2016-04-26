@@ -19,7 +19,6 @@
             <tbody>
                 @foreach (var x in Model)
                 {
-
                     <tr>
                         <td>
                             @if (x.Type == ChinaTower.Verification.Models.Infrastructures.FormType.站址)
@@ -80,6 +79,12 @@
                 </select>
             </div>
             <input type="submit" value="开始校验" class="btn btn-primary" />
+        </form>
+    </div>
+    <div class="showback">
+        <h4><i class="fa fa-angle-right"></i> 导出结果</h4>
+        <form asp-action="Export" asp-controller="Data" method="post">
+            <input type="submit" value="导出" class="btn btn-primary" />
         </form>
     </div>
 </div>

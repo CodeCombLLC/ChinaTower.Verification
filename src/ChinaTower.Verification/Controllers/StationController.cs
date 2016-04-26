@@ -45,52 +45,6 @@ namespace ChinaTower.Verification.Controllers
                 var allc = DB.Cities.Select(x => x.Id).ToList();
                 ret = ret.Where(x => cities.Contains(x.City) || !cities.Contains(x.City) && !allc.Contains(x.City));
             }
-            
-            // 处理导出逻辑
-            if (raw)
-            {
-                var timestamp = DateTime.Now.ToTimeStamp();
-                var directory = System.IO.Path.Combine(env.ApplicationBasePath, "Export");
-                if (!System.IO.Directory.Exists(directory))
-                    System.IO.Directory.CreateDirectory(directory);
-                var fname = System.IO.Path.Combine(directory, Guid.NewGuid() + ".xlsx");
-                var src = ret.ToList();
-                var url = Request.Scheme + "://" + Request.Host + "/Station/Export/" + timestamp;
-                var uid = User.Current.Id;
-                using (var serviceScope = Resolver.GetRequiredService<IServiceScopeFactory>().CreateScope())
-                {
-                    var userEmail = User.Current.Email;
-                    Task.Factory.StartNew(async () =>
-                    {
-                        using (var excel = ExcelStream.Create(fname))
-                        using (var sheet = excel.LoadSheet(1))
-                        {
-                            var header = new CodeComb.Data.Excel.Infrastructure.Row();
-                            foreach (var x in Hash.Headers[FormType.站址])
-                                header.Add(x);
-                            sheet.Add(header);
-                            foreach (var x in src)
-                            {
-                                var row = new CodeComb.Data.Excel.Infrastructure.Row();
-                                row.AddRange(x.FormStringArray);
-                                sheet.Add(row);
-                            }
-                            sheet.SaveChanges();
-                        }
-                        var blob = System.IO.File.ReadAllBytes(fname);
-                        System.IO.File.Delete(fname);
-                        Exports.Add(new Export { TimeStamp = timestamp, Expire = DateTime.Now.AddDays(1), Blob = blob, UserId = uid });
-                        var email = serviceScope.ServiceProvider.GetService<IEmailSender>();
-                        await email.SendEmailAsync(userEmail, $"站址数据已成功导出", $"<a href=\"{ url }\">点击此处下载 (stations.xlsx, { (blob.Length / 1024 / 1024).ToString("0.0") } MB)</a><br/><span>文件有效期至{ DateTime.Now.ToString("yyyy年MM月dd日 HH时mm分") }</span>");
-                        GC.Collect();
-                    });
-                }
-                return Prompt(x =>
-                {
-                    x.Title = "正在导出";
-                    x.Details = "系统正在处理您的导出请求，在导出完毕后系统会给您发送含有导出文件的邮件，请您耐心等待。";
-                });
-            }
             return PagedView(ret);
         }
 
@@ -286,6 +240,16 @@ namespace ChinaTower.Verification.Controllers
                     x.HideBack = true;
                 });
             return File(exp.Blob, "application/vnd.ms-excel", "stations.xlsx");
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult Pano(long id, string url)
+        {
+            var form = DB.Forms.Single(x => x.Id == id);
+            form.PanoUrl = url;
+            DB.SaveChanges();
+            return RedirectToAction("Show", "Station", new { id = id });
         }
     }
 }

@@ -35,6 +35,8 @@ namespace ChinaTower.Verification.Models
 
         public string FormJson { get; set; }
 
+        public string PanoUrl { get; set; }
+
         [MaxLength(32)]
         public string City { get; set; }
 

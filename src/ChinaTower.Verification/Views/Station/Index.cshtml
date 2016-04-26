@@ -43,9 +43,7 @@
                 </select>
             </div>
             <div class="col-md-2">
-                <input type="hidden" name="raw" value="false" id="raw" />
                 <input id="btnSearch" type="submit" value="检索" class="btn btn-primary" />
-                <input id="btnExport" type="submit" value="导出" class="btn btn-warning" />
             </div>
         </form>
     </div>
@@ -106,11 +104,3 @@
         </nav>
     </div>
 </div>
-<script>
-    $('#btnSearch').click(function () {
-        $('#raw').val('false');
-    });
-    $('#btnExport').click(function () {
-        $('#raw').val('true');
-    });
-</script>

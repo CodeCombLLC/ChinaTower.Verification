@@ -25,7 +25,6 @@ function deleteRow(id)
     closeDialog();
 }
 
-
 var pos;
 
 function serializeRules(rules)

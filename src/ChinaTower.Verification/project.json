@@ -28,11 +28,7 @@
 
   "frameworks": {
     "dnx451": { },
-    "dnxcore50": {
-      "dependencies": {
-        "System.Threading.Timer": "4.0.1-beta-23516"
-      }
-    }
+    "dnxcore50": { }
   },
 
   "exclude": [

@@ -19,8 +19,6 @@ namespace ChinaTower.Verification.Controllers
     [Authorize]
     public class StationController : BaseController
     {
-        public static List<Export> Exports = new List<Export>();
-
         public async Task<IActionResult> Index(string StationId, string StationName,string City, string District, VerificationStatus? Status, [FromServices] IApplicationEnvironment env, bool raw = false)
         {
             ViewBag.Cities = DB.Cities.ToList();
@@ -225,21 +223,6 @@ namespace ChinaTower.Verification.Controllers
                 x.RedirectText = "返回上一页";
                 x.RedirectUrl = Referer;
             });
-        }
-
-        [AllowAnonymous]
-        public IActionResult Export(long id)
-        {
-            var exp = Exports.FirstOrDefault(x => x.TimeStamp == id);
-            if (exp == null)
-                return Prompt(x =>
-                {
-                    x.Title = "没有找到相关资源";
-                    x.Details = "导出文件不存在或已失效，请重新导出！";
-                    x.StatusCode = 404;
-                    x.HideBack = true;
-                });
-            return File(exp.Blob, "application/vnd.ms-excel", "stations.xlsx");
         }
 
         [HttpPost]

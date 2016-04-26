@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading;
-using System.Linq;
+﻿using System.Threading;
 using Microsoft.AspNet.Builder;
 using Microsoft.AspNet.Hosting;
 using Microsoft.AspNet.Identity.EntityFramework;
@@ -58,15 +56,6 @@ namespace ChinaTower.Verification
             app.UseMvcWithDefaultRoute();
 
             await SampleData.InitDB(app.ApplicationServices);
-
-            ExportGC = new Timer((e) =>
-            {
-                var expired = Controllers.StationController.Exports.Where(x => DateTime.Now > x.Expire).ToList();
-                foreach (var x in expired)
-                    Controllers.StationController.Exports.Remove(x);
-                expired.Clear();
-                GC.Collect();
-            }, null, 0, 1000 * 60 * 20);
         }
 
         public static void Main(string[] args) => WebApplication.Run<Startup>(args);

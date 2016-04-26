@@ -22,5 +22,10 @@ namespace ChinaTower.Verification.Models
         public long? FormId { get; set; }
 
         public virtual Form Form { get; set; }
+
+        [ForeignKey("User")]
+        public string UserId { get; set; }
+
+        public virtual User User { get; set; }
     }
 }

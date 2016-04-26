@@ -490,109 +490,72 @@ namespace ChinaTower.Verification.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Export([FromServices] IApplicationEnvironment env)
         {
+            var url = Request.Scheme + "://" + Request.Host + "/Home/Download/";
             var uid = User.Current.Id;
-            var email = User.Current.Email;
+            var userEmail = User.Current.Email;
             var allc = DB.Cities.Select(x => x.Id).ToList();
+            var isRoot = User.IsInRole("Root");
             var cities = (await UserManager.GetClaimsAsync(User.Current)).Where(x => x.Type == "管辖市区").Select(x => x.Value).ToList();
             var directory = System.IO.Path.Combine(env.ApplicationBasePath, "Export");
             if (!System.IO.Directory.Exists(directory))
                 System.IO.Directory.CreateDirectory(directory);
             var fname = System.IO.Path.Combine(directory, Guid.NewGuid() + ".xlsx");
-            using (var excel = ExcelStream.Create(fname))
-            using (var conn = DB.Database.GetDbConnection())
+            using (var serviceScope = Resolver.GetRequiredService<IServiceScopeFactory>().CreateScope())
             {
-                conn.Open();
-                var iterator = 0;
-                var cnt = 0;
-
-                // 生成表头
-                var sheet1 = excel.LoadSheet(1);
-                sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { "站址编码", "唯一标识", "表单类型", "错误信息", "校验时间" });
-
-                // 每次读取1000个，防止连接超时
-                do
+                Task.Factory.StartNew(async ()=> 
                 {
-                    string sql1;
-                    if (User.IsInRole("Root"))
-                        sql1 = "SELECT \"VerificationTime\", \"VerificationJson\", \"UniqueKey\", \"StationKey\", \"Name\", \"Type\" FROM \"Form\" WHERE \"Status\" = @p0 LIMIT @take OFFSET @skip";
-                    else
-                        sql1 = "SELECT \"VerificationTime\", \"VerificationJson\", \"UniqueKey\", \"StationKey\", \"Name\", \"Type\" FROM \"Form\" WHERE \"Status\" = @p0 AND (\"City\" IN (SELECT \"ClaimValue\" FROM \"AspNetUserClaims\" WHERE \"UserId\" = @p1 AND \"ClaimType\" = @p2) OR \"City\" NOT IN (SELECT \"ClaimValue\" FROM \"AspNetUserClaims\" WHERE \"UserId\" = @p1 AND \"ClaimType\" = @p2) AND \"City\" NOT IN (SELECT \"Id\" FROM \"City\")) LIMIT @take OFFSET @skip";
-                    using (var cmd1 = new NpgsqlCommand(sql1, (NpgsqlConnection)conn))
+                    var db = serviceScope.ServiceProvider.GetRequiredService<ChinaTowerContext>();
+                    var email = serviceScope.ServiceProvider.GetRequiredService<IEmailSender>();
+                    using (var excel = ExcelStream.Create(fname))
+                    using (var sheet1 = excel.LoadSheet(1))
                     {
-                        // 添加标量
-                        cmd1.Parameters.Add(new NpgsqlParameter("@take", 1000));
-                        cmd1.Parameters.Add(new NpgsqlParameter("@skip", iterator * 1000));
-                        cmd1.Parameters.Add(new NpgsqlParameter("@p0", (object)(int)VerificationStatus.Wrong));
-                        if (!User.IsInRole("Root"))
+                        var tmp = db.Forms
+                            .Where(x => x.Status == VerificationStatus.Wrong);
+                        if (!isRoot)
+                            tmp = tmp.Where(x => cities.Contains(x.City) || (!cities.Contains(x.City) && !allc.Contains(x.City)));
+                        var g = tmp.GroupBy(x => x.StationKey)
+                            .Select(x => new { Key = x.Key, Count = x.Count(), Details = x.Select(y => new { Type = y.Type, Logs = y.VerificationJson }) })
+                            .ToList();
+                        var ids = g.Where(x => x.Key.HasValue)
+                            .Select(x => x.Key.Value.ToString())
+                            .Distinct()
+                            .ToList();
+                        var dic = db.Forms
+                            .Where(x => x.Type == FormType.站址 && ids.Contains(x.UniqueKey))
+                            .ToDictionary(x => x.UniqueKey, x => x.Name);
+                        foreach (var x in g.Where(x => x.Key.HasValue))
                         {
-                            // 非管理员需要添加额外的标量
-                            cmd1.Parameters.Add(new NpgsqlParameter("@p1", uid));
-                            cmd1.Parameters.Add(new NpgsqlParameter("@p2", "管辖市区"));
-                        }
-                        cnt = 0;                        
-                        // 获取DataReader
-                        using (var reader = cmd1.ExecuteReader())
-                        {
-                            // 遍历每条数据
-                            while(reader.Read())
+                            sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { $"【{dic[x.Key.Value.ToString()]}】 站址编码：{x.Key.Value} 错误个数：{x.Count}"});
+                            foreach (var y in x.Details)
                             {
-                                cnt++;
-                                var type = (FormType)reader["Type"];
-                                var stationKey = reader["StationKey"].ToString();
-                                var uniqueKey = reader["UniqueKey"].ToString();
-                                var logs = JsonConvert.DeserializeObject<List<VerificationLog>>(reader["VerificationJson"].ToString());
-                                var time = Convert.ToDateTime(reader["VerificationTime"]);
-                                var row = new CodeComb.Data.Excel.Infrastructure.Row();
-                                if (type == FormType.站址)
-                                    stationKey = uniqueKey;
-                                row.Add(stationKey);
-                                row.Add(uniqueKey);
-                                row.Add(type.ToString());
-                                row.Add(string.Join("\r\n", logs.Select(x => x.Reason)));
-                                row.Add(time.ToString("yyyy-MM-dd HH:mm"));
-                                sheet1.Add(row);
-                                row = null;
+                                var log = JsonConvert.DeserializeObject<ICollection<VerificationLog>>(y.Logs);
+                                foreach (var z in log)
+                                    foreach (var line in z.Reason.Split('\n'))
+                                        sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { $"┝ ◇[{y.Type}]{line}" });
                             }
                         }
+                        sheet1.SaveChanges();
                     }
-
-                    // 回收内存
-                    GC.Collect();
-                    // 迭代变量自增
-                    iterator++;
-                }
-                while (cnt == 1000);
-                // 保存sheet1
-                sheet1.SaveChanges();
-                sheet1.Dispose();
-
-                // 创建sheet2
-                var sheet2 = excel.CreateSheet("Sheet2");
-                sheet2.Add(new CodeComb.Data.Excel.Infrastructure.Row { "站址名称", "站址编码", "错误个数", "校验时间" });
-                string sql2;
-                var tmp = DB.Forms
-                    .Where(x => x.Status == VerificationStatus.Wrong);
-                if (!User.IsInRole("Root"))
-                    tmp = tmp.Where(x => cities.Contains(x.City) || (!cities.Contains(x.City) && !allc.Contains(x.City)));
-                var g = tmp.GroupBy(x => x.StationKey)
-                    .Select(x => new { Key = x.Key, Count = x.Count() })
-                    .ToList();
-                var ids = g.Where(x => x.Key.HasValue)
-                    .Select(x => x.Key.Value.ToString())
-                    .Distinct()
-                    .ToList();
-                var dic = DB.Forms
-                    .Where(x => x.Type == FormType.站址 && ids.Contains(x.UniqueKey))
-                    .ToDictionary(x => x.UniqueKey, x => x.Name);
-                foreach(var x in g.Where(x => x.Key.HasValue))
-                {
-                    sheet2.Add(new CodeComb.Data.Excel.Infrastructure.Row { dic[x.Key.Value.ToString()], x.Key.Value.ToString(), x.Count.ToString(), DateTime.Now.ToString("yyyy-MM-dd HH:mm") });
-                }
-                sheet2.SaveChanges();
-                sheet2.Dispose();
+                    var blob = System.IO.File.ReadAllBytes(fname);
+                    var b = new Blob
+                    {
+                        Content = blob,
+                        ContentType = "application/vnd.ms-excel",
+                        ContentLength = blob.Length,
+                        FileName = $"校验结果导出{ DateTime.Now.ToString("yyyyMMddHHmmss") }.xlsx",
+                        Time = DateTime.Now,
+                        UserId = uid
+                    };
+                    db.Blobs.Add(b);
+                    db.SaveChanges();
+                    await email.SendEmailAsync(userEmail, "校验结果导出完毕", $"<a href=\"{ url + b.Id }\">校验结果导出{ DateTime.Now.ToString("yyyyMMddHHmmss") }.xlsx</a>");
+                });
             }
-            var blob = System.IO.File.ReadAllBytes(fname);
-            return File(blob, "application/vnd.ms-excel", "stations.xlsx");
+            return Prompt(x =>
+            {
+                x.Title = "正在导出";
+                x.Details = "系统正在为您将校验结果导出到Excel，在导出完毕后，您将收到带有Excel表格附件的电子邮件，请稍候。";
+            });
         }
     }
 }

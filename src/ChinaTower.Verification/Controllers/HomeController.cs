@@ -30,6 +30,7 @@ namespace ChinaTower.Verification.Controllers
             return View(statistics);
         }
 
+        [AllowAnonymous]
         public IActionResult Download(Guid id)
         {
             var blob = DB.Blobs.Single(x => x.Id == id);

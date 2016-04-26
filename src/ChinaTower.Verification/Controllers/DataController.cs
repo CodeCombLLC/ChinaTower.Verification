@@ -192,7 +192,7 @@ namespace ChinaTower.Verification.Controllers
                                         var form = new Form
                                         {
                                             FormJson = JsonConvert.SerializeObject(fields),
-                                            StationKey = type == FormType.站址 ? null : (long?)Convert.ToInt64(fields[Hash.StationId[type].Value]),
+                                            StationKey = type == FormType.站址 ? Convert.ToInt64(fields[Hash.UniqueKey[type]]) : Convert.ToInt64(fields[Hash.StationId[type].Value]),
                                             Type = type,
                                             UniqueKey = fields[Hash.UniqueKey[type]],
                                             VerificationJson = JsonConvert.SerializeObject(logs),
@@ -488,10 +488,12 @@ namespace ChinaTower.Verification.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Export([FromServices] IApplicationEnvironment env)
+        public async Task<IActionResult> Export([FromServices] IApplicationEnvironment env)
         {
             var uid = User.Current.Id;
             var email = User.Current.Email;
+            var allc = DB.Cities.Select(x => x.Id).ToList();
+            var cities = (await UserManager.GetClaimsAsync(User.Current)).Where(x => x.Type == "管辖市区").Select(x => x.Value).ToList();
             var directory = System.IO.Path.Combine(env.ApplicationBasePath, "Export");
             if (!System.IO.Directory.Exists(directory))
                 System.IO.Directory.CreateDirectory(directory);
@@ -568,32 +570,24 @@ namespace ChinaTower.Verification.Controllers
                 var sheet2 = excel.CreateSheet("Sheet2");
                 sheet2.Add(new CodeComb.Data.Excel.Infrastructure.Row { "站址名称", "站址编码", "错误个数", "校验时间" });
                 string sql2;
-                if (User.IsInRole("Root"))
-                    sql2 = "SELECT * FROM \"ErrorStations\" LIMIT @take OFFSET @skip;";
-                else
-                    sql2 = "SELECT * FROM \"ErrorStations\" WHERE \"City\" IN (SELECT \"ClaimValue\" FROM \"AspNetUserClaims\" WHERE \"UserId\" = @p0) OR (\"City\" NOT IN (SELECT \"ClaimValue\" FROM \"AspNetUserClaims\" WHERE \"UserId\" = @p0) AND \"City\" NOT IN (SELECT \"Id\" FROM \"City\")) LIMIT @take OFFSET @skip;";
-                iterator = 0;
-                cnt = 0;
-                do
+                var tmp = DB.Forms
+                    .Where(x => x.Status == VerificationStatus.Wrong);
+                if (!User.IsInRole("Root"))
+                    tmp = tmp.Where(x => cities.Contains(x.City) || (!cities.Contains(x.City) && !allc.Contains(x.City)));
+                var g = tmp.GroupBy(x => x.StationKey)
+                    .Select(x => new { Key = x.Key, Count = x.Count() })
+                    .ToList();
+                var ids = g.Where(x => x.Key.HasValue)
+                    .Select(x => x.Key.Value.ToString())
+                    .Distinct()
+                    .ToList();
+                var dic = DB.Forms
+                    .Where(x => x.Type == FormType.站址 && ids.Contains(x.UniqueKey))
+                    .ToDictionary(x => x.UniqueKey, x => x.Name);
+                foreach(var x in g.Where(x => x.Key.HasValue))
                 {
-                    using (var cmd2 = new NpgsqlCommand(sql2, (NpgsqlConnection)conn))
-                    {
-                        cmd2.Parameters.Add(new NpgsqlParameter("@take", 1000));
-                        cmd2.Parameters.Add(new NpgsqlParameter("@skip", iterator * 1000));
-                        if (!User.IsInRole("Root"))
-                            cmd2.Parameters.Add(new NpgsqlParameter("@p0", uid));
-                        using (var reader = cmd2.ExecuteReader())
-                        {
-                            cnt = 0;
-                            while(reader.Read())
-                            {
-                                cnt++;
-                                sheet2.Add(new CodeComb.Data.Excel.Infrastructure.Row { reader["Name"].ToString(), reader["Number"].ToString(), reader["Count"].ToString(), Convert.ToDateTime(reader["Time"]).ToString("yyyy-MM-dd HH:mm") });
-                            }
-                        }
-                    }
+                    sheet2.Add(new CodeComb.Data.Excel.Infrastructure.Row { dic[x.Key.Value.ToString()], x.Key.Value.ToString(), x.Count.ToString(), DateTime.Now.ToString("yyyy-MM-dd HH:mm") });
                 }
-                while (cnt == 1000);
                 sheet2.SaveChanges();
                 sheet2.Dispose();
             }

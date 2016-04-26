@@ -49,6 +49,7 @@ namespace ChinaTower.Verification.Models
             builder.Entity<Blob>(e =>
             {
                 e.HasIndex(x => x.Time);
+                e.HasIndex(x => x.Type);
             });
         }
     }

@@ -3,13 +3,11 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNet.Mvc;
-using Microsoft.Data.Entity;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.PlatformAbstractions;
+using Microsoft.AspNet.Http;
 using Microsoft.AspNet.Authorization;
-using CodeComb.Data.Excel;
+using Microsoft.Data.Entity;
+using Microsoft.Extensions.PlatformAbstractions;
 using CodeComb.Data.Verification;
-using CodeComb.Net.EmailSender;
 using Newtonsoft.Json;
 using ChinaTower.Verification.Models;
 using ChinaTower.Verification.Models.Infrastructures;
@@ -235,6 +233,39 @@ namespace ChinaTower.Verification.Controllers
             form.PanoUrl = url;
             DB.SaveChanges();
             return RedirectToAction("Show", "Station", new { id = id });
+        }
+
+        [HttpGet]
+        public IActionResult Picture(long id, ImageType type)
+        {
+            var blob = DB.Blobs
+                .Where(x => x.Type == type && x.FormId == id)
+                .OrderByDescending(x => x.Time)
+                .ToList();
+            return View(blob);
+        }
+
+        [HttpPost]
+        public IActionResult Upload(long id, ImageType type, IFormFile file)
+        {
+            var blob = new Blob
+            {
+                FileName = file.GetFileName(),
+                Content = file.ReadAllBytes(),
+                ContentLength = file.Length,
+                FormId = id,
+                Time = DateTime.Now,
+                Type = type,
+                ContentType = file.ContentType,
+                UserId = User.Current.Id
+            };
+            DB.Blobs.Add(blob);
+            DB.SaveChanges();
+            return Prompt(x =>
+            {
+                x.Title = "上传成功";
+                x.Details = "照片已经成功上传至服务器中！";
+            });
         }
     }
 }

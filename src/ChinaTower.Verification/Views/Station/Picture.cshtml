@@ -1,0 +1,26 @@
+﻿@model IEnumerable<Blob>
+@{ 
+    Layout = null; 
+}
+<table class="table">
+    <thead>
+        <tr>
+            <th>照片名称</th>
+            <th>上传日期</th>
+            <th>操作</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach(var x in Model)
+        { 
+            <tr>
+                <td>@x.FileName</td>
+                <td>@x.Time</td>
+                <td>
+                    <a target="_blank" asp-action="Download" asp-controller="Home" asp-route-id="@x.Id">查看照片</a>
+                    <a asp-action="javascript:removePicture('@x.Id');">删除照片</a>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

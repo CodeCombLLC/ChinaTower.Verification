@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using ChinaTower.Verification.Models.Infrastructures;
 
 namespace ChinaTower.Verification.Models
 {
@@ -10,6 +11,8 @@ namespace ChinaTower.Verification.Models
 
         [MaxLength(64)]
         public string FileName { get; set; }
+
+        public byte[] Content { get; set; }
 
         [MaxLength(64)]
         public string ContentType { get; set; }
@@ -27,5 +30,7 @@ namespace ChinaTower.Verification.Models
         public string UserId { get; set; }
 
         public virtual User User { get; set; }
+
+        public ImageType? Type { get; set; }
     }
 }

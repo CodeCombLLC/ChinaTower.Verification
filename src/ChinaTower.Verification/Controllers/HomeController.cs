@@ -29,5 +29,31 @@ namespace ChinaTower.Verification.Controllers
 
             return View(statistics);
         }
+
+        public IActionResult Download(Guid id)
+        {
+            var blob = DB.Blobs.Single(x => x.Id == id);
+            return File(blob.Content, blob.ContentType, blob.FileName);
+        }
+
+        [HttpPost]
+        public IActionResult RemoveFile(Guid id)
+        {
+            var blob = DB.Blobs.Single(x => x.Id == id);
+            if (blob.UserId != User.Current.Id && !User.IsInRole("Root"))
+                return Prompt(x =>
+                {
+                    x.Title = "权限不足";
+                    x.Details = "您没有权限删除这个文件！";
+                    x.StatusCode = 403;
+                });
+            DB.Blobs.Remove(blob);
+            DB.SaveChanges();
+            return Prompt(x =>
+            {
+                x.Title = "删除成功";
+                x.Details = "这个文件已经删除成功！";
+            });
+        }
     }
 }

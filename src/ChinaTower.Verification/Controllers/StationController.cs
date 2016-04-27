@@ -267,5 +267,27 @@ namespace ChinaTower.Verification.Controllers
                 x.Details = "照片已经成功上传至服务器中！";
             });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Delete(long id)
+        {
+            var form = DB.Forms.Single(x => x.Id == id && x.Type == FormType.站址);
+            if (!User.IsInRole("Root"))
+            {
+                var cities = (await UserManager.GetClaimsAsync(User.Current))
+                    .Where(x => x.Type == "管辖市区")
+                    .Select(x => x.Value)
+                    .ToList();
+                var allc = DB.Cities
+                    .Select(x => x.Id)
+                    .ToList();
+                if (!cities.Contains(form.City) && allc.Contains(form.City))
+                    return Content("failed");
+            }
+            DB.Forms.Remove(form);
+            DB.SaveChanges();
+            return Content("ok");
+        }
     }
 }

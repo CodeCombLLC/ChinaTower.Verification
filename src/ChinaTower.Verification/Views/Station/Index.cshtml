@@ -52,6 +52,7 @@
         <table class="table table-bordered table-striped table-condensed scroll-table">
             <thead>
                 <tr>
+                    <th>操作</th>
                     @foreach(var x in ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址])
                     {
                         <th>@x</th>
@@ -61,7 +62,11 @@
             <tbody>
                 @foreach(var x in Model)
                 { 
-                    <tr>
+                    <tr id="station-@x.Id">
+                        <td>
+                            <a asp-action="Show" asp-controller="Station" asp-route-id="@x.Id">站址详情</a>
+                            <a href="javascript:deleteDialog('@x.Id' ,'station-@x.Id');">删除站址</a>
+                        </td>
                         @for (var i = 0; i < ChinaTower.Verification.Models.Infrastructures.Hash.Headers[ChinaTower.Verification.Models.Infrastructures.FormType.站址].Count(); i++)
                         {
                             if (i < x.FormStringArray.Count())
@@ -104,3 +109,12 @@
         @Html.MakePager("", "active", "pagination")
     </nav>
 </div>
+<form asp-action="Delete" asp-controller="Station" method="post" id="frmDelete">
+    <input type="hidden" name="id" id="stationId" />
+</form>
+<script>
+    function Delete(id) {
+        $('#stationId').val(id);
+        $.post($('#frmDelete').attr('action'), $('#frmDelete').serialize(), function () { });
+    }
+</script>

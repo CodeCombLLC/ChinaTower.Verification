@@ -45,7 +45,7 @@ namespace ChinaTower.Verification.Controllers
         [HttpPost]
         [AnyRoles("Root")]
         [ValidateAntiForgeryToken]
-        public IActionResult Delete(string city, [FromHeader] string Referer)
+        public IActionResult Delete(string city)
         {
             var c = DB.Cities.Single(x => x.Id == city);
             DB.Cities.Remove(c);

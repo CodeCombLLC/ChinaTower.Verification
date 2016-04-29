@@ -93,7 +93,7 @@ namespace ChinaTower.Verification.Models
                     }
                     if (new RuleType[] { RuleType.And, RuleType.Or, RuleType.Not }.Contains(a.Type))
                     {
-                        str.AppendLine(RenderRules(a.NestedRules, type));
+                        str.AppendLine(RenderRules(a.NestedRules, type, Editing));
                     }
                     str.AppendLine("</li>");
                 }

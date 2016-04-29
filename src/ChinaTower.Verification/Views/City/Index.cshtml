@@ -98,11 +98,11 @@
     </div>
 </div>
 <form asp-action="Delete" asp-controller="City" method="post" id="frmDelete">
-    <input type="hidden" name="city" id="cityId" />
+    <input type="hidden" name="city" id="cityIdDelete" />
 </form>
 <script>
     function Delete(id) {
-        $('#cityId').val(id);
+        $('#cityIdDelete').val(id);
         $.post($('#frmDelete').attr('action'), $('#frmDelete').serialize(), function () { });
     }
     function editDistricts(id) {
@@ -111,7 +111,7 @@
         $('#lstDistricts').html('');
         $.getJSON('@Url.Action("GetDistricts", "City")', { id: id }, function (data) { 
             for (var i = 0; i < data.length; i++) {
-                $('#lstDistricts').append('<tr><td class="district">' + data + '</td><td><a href="javascript:;" onclick="removeDistrict(this)">删除</a></td></tr>');
+                $('#lstDistricts').append('<tr><td class="district">' + data[i] + '</td><td><a href="javascript:;" onclick="removeDistrict(this)">删除</a></td></tr>');
             }
         });
     }

@@ -66,8 +66,16 @@ namespace ChinaTower.Verification.Controllers
                 var formId = DB.Forms
                     .Where(x => x.UniqueKey == sid.Value.ToString() && x.Type == FormType.站址)
                     .Select(x => x.Id)
-                    .Single();
-                return RedirectToAction("Show", "Station", new { id = formId });
+                    .SingleOrDefault();
+                if (formId != default(long))
+                    return RedirectToAction("Show", "Station", new { id = formId });
+                else
+                    return Prompt(x => 
+                    {
+                        x.Title = "没有找到站址";
+                        x.Details = "该数据对应的站址不存在，请检查后再试！";
+                        x.StatusCode = 404;
+                    });
             }
         }
         
@@ -105,6 +113,7 @@ namespace ChinaTower.Verification.Controllers
         {
             var form = DB.Forms.Single(x => x.Id == id);
             ViewBag.Rules = DB.VerificationRules
+                .Include(x => x.Rule)
                 .Where(x => x.Type == form.Type)
                 .ToList();
             return View(form);

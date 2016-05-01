@@ -67,6 +67,8 @@
         var points = [];
         for (var i = 0; i < current_edge.length; i++)
             points.push(new BMap.Point(current_edge[i].X, current_edge[i].Y));
+        if (current_edge.length > 0)
+            points.push(new BMap.Point(current_edge[0].X, current_edge[0].Y));
         var polyline = new BMap.Polyline(points, { strokeColor:'blue', strokeWeight:5, strokeOpacity:1 });
         map.addOverlay(polyline);
     });

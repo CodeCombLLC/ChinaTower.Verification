@@ -163,17 +163,29 @@ namespace ChinaTower.Verification.Controllers
                                         var fields = new List<string>();
                                         for (var i = 0; i < Hash.Headers[type].Count(); i++)
                                         {
-                                            fields.Add(row[i]);
+                                            if (i < row.Count)
+                                                fields.Add(row[i]);
+                                            else
+                                                fields.Add("");
                                         }
-                                        var verifyResult = new CodeComb.Data.Verification.VerifyResult { IsSuccess = true };
-                                        foreach (var r in rules)
+                                        var verifyResult = new VerifyResult { IsSuccess = true };
+                                        try
                                         {
-                                            var res = dvrm.Verify(r.RuleId, fields.ToArray());
-                                            if (!res.IsSuccess)
+                                            foreach (var r in rules)
                                             {
-                                                verifyResult.IsSuccess = false;
+                                                var res = dvrm.Verify(r.RuleId, fields.ToArray());
+                                                if (!res.IsSuccess)
+                                                {
+                                                    verifyResult.IsSuccess = false;
+                                                }
                                             }
                                         }
+                                        catch
+                                        {
+                                            verifyResult.Information = "未知错误";
+                                            verifyResult.IsSuccess = false;
+                                        }
+                                        
                                         // 如果没有校验规则
                                         if (rules.Count == 0)
                                         {
@@ -268,30 +280,46 @@ namespace ChinaTower.Verification.Controllers
                                                 form.Status = VerificationStatus.Wrong;
                                             }
                                         }
-                                        var existedForm = db.Forms.SingleOrDefault(x => x.UniqueKey == form.UniqueKey && x.Type == type);
+                                        var existedForm = db.Forms
+                                            .AsNoTracking()
+                                            .SingleOrDefault(x => x.UniqueKey == form.UniqueKey && x.Type == type);
                                         // 如果数据库中没有这条数据，则写入
                                         if (existedForm == null)
                                         {
                                             addition++;
-                                            db.Database.ExecuteSqlCommand("INSERT INTO \"Form\" (\"FormJson\", \"StationKey\", \"Type\", \"UniqueKey\", \"VerificationJson\", \"VerificationTime\",\"Status\", \"Lon\", \"Lat\", \"City\", \"District\", \"Name\") VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11});", form.FormJson, form.StationKey, form.Type, form.UniqueKey, form.VerificationJson, form.VerificationTime, (int)form.Status, form.Lon, form.Lat, form.City, form.District, form.Name);
+                                            try
+                                            {
+                                                db.Database.ExecuteSqlCommand("INSERT INTO \"Form\" (\"FormJson\", \"StationKey\", \"Type\", \"UniqueKey\", \"VerificationJson\", \"VerificationTime\",\"Status\", \"Lon\", \"Lat\", \"City\", \"District\", \"Name\") VALUES ({0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11});", form.FormJson, form.StationKey, form.Type, form.UniqueKey, form.VerificationJson, form.VerificationTime, (int)form.Status, form.Lon, form.Lat, form.City, form.District, form.Name);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Console.WriteLine(ex.ToString());
+                                            }
                                         }
                                         // 否则更新
                                         else
                                         {
                                             updated++;
-                                            db.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Name\" = {0}, \"Lon\" = {1}, \"Lat\" = {2}, \"StationKey\" = {3}, \"Status\" = {4}, \"Type\" = {5}, \"VerificationJson\" = {6}, \"VerificationTime\" = {7}, \"UniqueKey\" = {8}, \"City\" = {9}, \"District\" = {10} WHERE \"UniqueKey\" = {11}",
-                                                form.Name,
-                                                form.Lon,
-                                                form.Lat,
-                                                form.StationKey,
-                                                form.Status,
-                                                (int)form.Type,
-                                                form.VerificationJson,
-                                                form.VerificationTime,
-                                                form.UniqueKey,
-                                                form.City,
-                                                form.District,
-                                                form.UniqueKey);
+                                            try
+                                            {
+                                                db.Database.ExecuteSqlCommand("UPDATE \"Form\" SET \"Name\" = {0}, \"Lon\" = {1}, \"Lat\" = {2}, \"StationKey\" = {3}, \"Status\" = {4}, \"Type\" = {5}, \"VerificationJson\" = {6}, \"VerificationTime\" = {7}, \"UniqueKey\" = {8}, \"City\" = {9}, \"District\" = {10} WHERE \"UniqueKey\" = {11}",
+                                                    form.Name,
+                                                    form.Lon,
+                                                    form.Lat,
+                                                    form.StationKey,
+                                                    form.Status,
+                                                    (int)form.Type,
+                                                    form.VerificationJson,
+                                                    form.VerificationTime,
+                                                    form.UniqueKey,
+                                                    form.City,
+                                                    form.District,
+                                                    form.UniqueKey);
+                                            }
+                                            catch (Exception ex)
+                                            {
+                                                Console.WriteLine(ex.ToString());
+                                            }
                                         }
                                     }
                                 }
@@ -373,19 +401,17 @@ namespace ChinaTower.Verification.Controllers
                         using (var conn = new NpgsqlConnection(Startup.ConnectionString))
                         {
                             conn.Open();
-                            var count = 0L;
-                            using (var cmd = new NpgsqlCommand("SELECT COUNT(*) FROM \"Form\" WHERE \"Status\" = 2", conn))
+                            int count;
+                            do
                             {
-                                count = (long)cmd.ExecuteScalar();
-                            }
-                            for(var i = 0; i * 100 < count; i ++)
-                            {
-                                using (var cmd = new NpgsqlCommand("SELECT \"Id\",\"FormJson\", \"Type\" FROM \"Form\" WHERE \"Status\" = 2 LIMIT 100", conn))
+                                count = 0;
+                                using (var cmd = new NpgsqlCommand("SELECT \"Id\",\"FormJson\", \"Type\" FROM \"Form\" WHERE \"Status\" = 2 LIMIT 300", conn))
                                 using (var reader = cmd.ExecuteReader())
                                 {
                                     while (reader.Read())
                                     {
                                         total++;
+                                        count++;
                                         var type = (FormType)reader["Type"];
                                         var result = new VerifyResult { IsSuccess = true, Information = "", FailedRules = new List<Rule>() };
                                         var json = reader["FormJson"].ToString();
@@ -396,12 +422,22 @@ namespace ChinaTower.Verification.Controllers
                                             .ToList();
                                         foreach (var x in rules)
                                         {
-                                            var res = dvrm.Verify(x.RuleId, fields);
-                                            if (!res.IsSuccess)
+                                            try
+                                            {
+                                                var res = dvrm.Verify(x.RuleId, fields);
+                                                if (!res.IsSuccess)
+                                                {
+                                                    result.IsSuccess = false;
+                                                    result.Information += res.Information;
+                                                    result.FailedRules.AddRange(res.FailedRules);
+                                                    status = VerificationStatus.Wrong;
+                                                }
+                                            }
+                                            catch
                                             {
                                                 result.IsSuccess = false;
-                                                result.Information += res.Information;
-                                                result.FailedRules.AddRange(res.FailedRules);
+                                                result.Information += "未知原因";
+                                                status = VerificationStatus.Wrong;
                                             }
                                         }
                                         var logs = new List<VerificationLog>();
@@ -454,6 +490,7 @@ namespace ChinaTower.Verification.Controllers
                                 }
                                 GC.Collect();
                             }
+                            while (count > 0);
                         }
                         var email = serviceScope.ServiceProvider.GetService<IEmailSender>();
                         email.SendEmailAsync(userEmail, "数据校验完成", $"数据已经校验完成，总共校验 {total} 条数据，其中 {failed} 条没有通过校验。");

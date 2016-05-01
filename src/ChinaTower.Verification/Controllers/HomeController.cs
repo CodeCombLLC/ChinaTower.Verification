@@ -14,7 +14,7 @@ namespace ChinaTower.Verification.Controllers
         public IActionResult Index()
         {
             var raw = DB.Forms
-                .Where(x =>x.Type == FormType.站址)
+                .Where(x => !string.IsNullOrEmpty(x.City))
                 .GroupBy(x => new { Status = x.Status, City = x.City })
                 .Select(x => new { Key = x.Key, Count = x.Count() })
                 .ToList();

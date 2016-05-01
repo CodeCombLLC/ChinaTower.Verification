@@ -54,7 +54,7 @@
         <div class="showback">
             <h4><i class="fa fa-angle-right"></i> @form.Key.ToString()</h4>
             <div class="scroll-table-outer">
-                <table class="table table-bordered table-striped table-condensed srcoll-table">
+                <table class="table table-bordered table-striped table-condensed scroll-table">
                     <thead>
                         <tr>
                             @foreach (var x in ChinaTower.Verification.Models.Infrastructures.Hash.Headers[form.Key])
@@ -91,7 +91,7 @@
                                     {
                                         <a href="javascript:showVerifyDetails(@x.Id)">错误详情</a>
                                     }
-                                    <a href="javascript:editForm(@x.Id, @((int)x.Type)">编辑表单</a>
+                                    <a href="javascript:editForm(@x.Id, @((int)x.Type))">编辑表单</a>
                                 </td>
                             </tr>
                         }
@@ -125,7 +125,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="myModalLabel">720度全景</h4>
             </div>
-            <div class="modal-body" id="divVerifyLog">
+            <div class="modal-body">
                 <iframe src="@Model.PanoUrl" style="width: 100%; height: 600px"></iframe>
             </div>
             <div class="modal-footer">
@@ -157,7 +157,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="myModalLabel">编辑全景链接</h4>
             </div>
-            <div class="modal-body" id="divVerifyLog">
+            <div class="modal-body">
                 <div class="form-group">
                     <label>URL</label>
                     <input type="text" class="form-control" name="url" value="@Model.PanoUrl" />
@@ -177,7 +177,7 @@
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
                 <h4 class="modal-title" id="myModalLabel">上传照片</h4>
             </div>
-            <div class="modal-body" id="divVerifyLog">
+            <div class="modal-body">
                 <div class="form-group">
                     <label>照片类型</label>
                     <select name="type" class="form-control">

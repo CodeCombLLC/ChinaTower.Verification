@@ -555,7 +555,7 @@ namespace ChinaTower.Verification.Controllers
                         if (!isRoot)
                             tmp = tmp.Where(x => cities.Contains(x.City) || (!cities.Contains(x.City) && !allc.Contains(x.City)));
                         var g = tmp.GroupBy(x => x.StationKey)
-                            .Select(x => new { Key = x.Key, Count = x.Count(), Details = x.Select(y => new { Type = y.Type, Logs = y.VerificationJson }) })
+                            .Select(x => new { Key = x.Key, Count = x.Count(), Details = x.Select(y => new { City = y.City, UniqueKey = y.UniqueKey, Type = y.Type, Logs = y.VerificationJson }) })
                             .ToList();
                         var ids = g.Where(x => x.Key.HasValue)
                             .Select(x => x.Key.Value.ToString())
@@ -568,15 +568,27 @@ namespace ChinaTower.Verification.Controllers
                         {
                             if (!dic.ContainsKey(x.Key.Value.ToString()))
                                 continue;
-                            sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { $"【{dic[x.Key.Value.ToString()]}】 站址编码：{x.Key.Value} 错误表单：{x.Count}"});
+                            var rowStr = $"【{dic[x.Key.Value.ToString()]}】 站址编码：{x.Key.Value} 错误表单：{x.Count}";
+                            if (isRoot)
+                                sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { x.Details.FirstOrDefault()?.City, rowStr });
+                            else
+                                sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { rowStr });
                             foreach (var y in x.Details)
                             {
                                 try
                                 {
                                     var log = JsonConvert.DeserializeObject<ICollection<VerificationLog>>(y.Logs);
                                     foreach (var z in log)
+                                    {
                                         foreach (var line in z.Reason.Split('\n'))
-                                            sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { $"┝ ◇[{y.Type}]{line}" });
+                                        {
+                                            var subRow = $"┝ ◇[{y.Type}]编号：{y.UniqueKey} {line}";
+                                            if (isRoot)
+                                                sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { y.City, subRow });
+                                            else
+                                                sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { subRow });
+                                        }
+                                    }
                                 }
                                 catch (Exception ex)
                                 {

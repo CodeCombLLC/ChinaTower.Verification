@@ -405,7 +405,7 @@ namespace ChinaTower.Verification.Controllers
                             do
                             {
                                 count = 0;
-                                using (var cmd = new NpgsqlCommand("SELECT \"Id\",\"FormJson\", \"Type\" FROM \"Form\" WHERE \"Status\" = 2 LIMIT 300", conn))
+                                using (var cmd = new NpgsqlCommand("SELECT \"Id\",\"FormJson\", \"Type\" FROM \"Form\" WHERE \"Status\" = 2 LIMIT 100", conn))
                                 using (var reader = cmd.ExecuteReader())
                                 {
                                     while (reader.Read())
@@ -566,13 +566,22 @@ namespace ChinaTower.Verification.Controllers
                             .ToDictionary(x => x.UniqueKey, x => x.Name);
                         foreach (var x in g.Where(x => x.Key.HasValue))
                         {
+                            if (!dic.ContainsKey(x.Key.Value.ToString()))
+                                continue;
                             sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { $"【{dic[x.Key.Value.ToString()]}】 站址编码：{x.Key.Value} 错误表单：{x.Count}"});
                             foreach (var y in x.Details)
                             {
-                                var log = JsonConvert.DeserializeObject<ICollection<VerificationLog>>(y.Logs);
-                                foreach (var z in log)
-                                    foreach (var line in z.Reason.Split('\n'))
-                                        sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { $"┝ ◇[{y.Type}]{line}" });
+                                try
+                                {
+                                    var log = JsonConvert.DeserializeObject<ICollection<VerificationLog>>(y.Logs);
+                                    foreach (var z in log)
+                                        foreach (var line in z.Reason.Split('\n'))
+                                            sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { $"┝ ◇[{y.Type}]{line}" });
+                                }
+                                catch (Exception ex)
+                                {
+                                    Console.WriteLine(ex.ToString());
+                                }
                             }
                         }
                         sheet1.SaveChanges();

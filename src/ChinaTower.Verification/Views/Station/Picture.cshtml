@@ -2,25 +2,13 @@
 @{ 
     Layout = null; 
 }
-<table class="table">
-    <thead>
-        <tr>
-            <th>照片名称</th>
-            <th>上传日期</th>
-            <th>操作</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach(var x in Model)
-        { 
-            <tr>
-                <td>@x.FileName</td>
-                <td>@x.Time</td>
-                <td>
-                    <a target="_blank" asp-action="Image" asp-controller="Home" asp-route-id="@x.Id">查看照片</a>
-                    <a href="javascript:removePicture('@x.Id');">删除照片</a>
-                </td>
-            </tr>
-        }
-    </tbody>
-</table>
+@for(var i = 0; i < Model.Count(); i++)
+{
+    <div style="text-align: center;margin-bottom:15px;">
+        <img style="max-width: 70%" src="/Home/Download/@Model.ElementAt(i).Id" alt="@Model.ElementAt(i).FileName" />
+        <br />
+        <a target="_blank" asp-action="Image" asp-controller="Home" asp-route-id="@Model.ElementAt(i).Id">查看照片</a>
+        <a href="javascript:removePicture('@Model.ElementAt(i).Id');">删除照片</a>
+        <hr />
+    </div>
+}

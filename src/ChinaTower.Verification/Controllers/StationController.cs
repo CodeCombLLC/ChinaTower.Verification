@@ -8,6 +8,7 @@ using Microsoft.AspNet.Authorization;
 using Microsoft.Data.Entity;
 using Microsoft.Extensions.PlatformAbstractions;
 using CodeComb.Data.Verification;
+using CodeComb.Media;
 using Newtonsoft.Json;
 using ChinaTower.Verification.Models;
 using ChinaTower.Verification.Models.Infrastructures;
@@ -79,7 +80,7 @@ namespace ChinaTower.Verification.Controllers
             }
         }
         
-        public IActionResult FIelds(long id)
+        public IActionResult Fields(long id)
         {
             var form = DB.Forms.Single(x => x.Id == id);
             ViewBag.Headers = Hash.Headers[form.Type];
@@ -257,11 +258,16 @@ namespace ChinaTower.Verification.Controllers
         [HttpPost]
         public IActionResult Upload(long id, ImageType type, IFormFile file)
         {
+            var img = new Image(file.ReadAllBytes(), System.IO.Path.GetExtension(file.GetFileName()));
+            Console.WriteLine("{0} {1}", img.Height, img.Width);
+            if (img.Height > 800)
+                img = img.Convert(System.IO.Path.GetExtension(file.GetFileName()), img.Width * 800 / img.Height, 800);
+            Console.WriteLine("{0} {1}", img.Height, img.Width);
             var blob = new Blob
             {
                 FileName = file.GetFileName(),
-                Content = file.ReadAllBytes(),
-                ContentLength = file.Length,
+                Content = img.AllBytes,
+                ContentLength = img.AllBytes.Length,
                 FormId = id,
                 Time = DateTime.Now,
                 Type = type,

@@ -578,17 +578,25 @@ namespace ChinaTower.Verification.Controllers
                                 try
                                 {
                                     var log = JsonConvert.DeserializeObject<ICollection<VerificationLog>>(y.Logs);
+                                    var rows = new List<string>();
                                     foreach (var z in log)
                                     {
-                                        var lines = z.Reason.Split('\n').Distinct();
+                                        var lines = z.Reason.Split('\n');
                                         foreach (var line in lines)
                                         {
                                             var subRow = $"┝ ◇[{y.Type}]编号：{y.UniqueKey} {line}";
-                                            if (isRoot)
-                                                sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { dic[x.Key.Value.ToString()].City, subRow });
-                                            else
-                                                sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { subRow });
+                                            rows.Add(subRow);
                                         }
+                                    }
+                                    rows = rows
+                                        .Distinct()
+                                        .ToList(); 
+                                    foreach(var r in rows)
+                                    {
+                                        if (isRoot)
+                                            sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { dic[x.Key.Value.ToString()].City, r });
+                                        else
+                                            sheet1.Add(new CodeComb.Data.Excel.Infrastructure.Row { r });
                                     }
                                 }
                                 catch (Exception ex)
